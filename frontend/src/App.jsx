@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
+import PersonaManager from './components/PersonaManager';
+import NewConversationDialog from './components/NewConversationDialog';
 import { api } from './api';
 import './App.css';
 
@@ -9,6 +11,10 @@ function App() {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Dialog states
+  const [showPersonaManager, setShowPersonaManager] = useState(false);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -40,9 +46,10 @@ function App() {
     }
   };
 
-  const handleNewConversation = async () => {
+  const handleStartNewConversation = async (councilMembers, chairmanId) => {
     try {
-      const newConv = await api.createConversation();
+      setShowNewChatDialog(false);
+      const newConv = await api.createConversation(councilMembers, chairmanId);
       setConversations([
         { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
         ...conversations,
@@ -181,19 +188,54 @@ function App() {
     }
   };
 
+  const handleDeleteConversation = async (id) => {
+    try {
+      await api.deleteConversation(id);
+
+      // Remove from list
+      const updatedConversations = conversations.filter(c => c.id !== id);
+      setConversations(updatedConversations);
+
+      // If deleted conversation was active, select another one or clear
+      if (currentConversationId === id) {
+        if (updatedConversations.length > 0) {
+          setCurrentConversationId(updatedConversations[0].id);
+        } else {
+          setCurrentConversationId(null);
+          setCurrentConversation(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
   return (
     <div className="app">
       <Sidebar
         conversations={conversations}
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
+        onNewConversation={() => setShowNewChatDialog(true)}
+        onManagePersonas={() => setShowPersonaManager(true)}
+        onDeleteConversation={handleDeleteConversation}
       />
       <ChatInterface
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
       />
+
+      {showPersonaManager && (
+        <PersonaManager onClose={() => setShowPersonaManager(false)} />
+      )}
+
+      {showNewChatDialog && (
+        <NewConversationDialog
+          onClose={() => setShowNewChatDialog(false)}
+          onStart={handleStartNewConversation}
+        />
+      )}
     </div>
   );
 }

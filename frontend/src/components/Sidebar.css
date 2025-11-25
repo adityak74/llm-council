@@ -18,22 +18,40 @@
   color: #333;
 }
 
-.new-conversation-btn {
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.new-chat-btn,
+.manage-personas-btn {
   width: 100%;
   padding: 10px;
-  background: #4a90e2;
-  border: 1px solid #4a90e2;
   border-radius: 6px;
-  color: #fff;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.2s;
   font-weight: 500;
+  border: none;
 }
 
-.new-conversation-btn:hover {
+.new-chat-btn {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.new-chat-btn:hover {
   background: #357abd;
-  border-color: #357abd;
+}
+
+.manage-personas-btn {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.manage-personas-btn:hover {
+  background: #cbd5e1;
 }
 
 .conversation-list {
@@ -55,6 +73,14 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conversation-content {
+  flex: 1;
+  overflow: hidden;
 }
 
 .conversation-item:hover {
@@ -70,9 +96,33 @@
   color: #333;
   font-size: 14px;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .conversation-meta {
   color: #999;
   font-size: 12px;
+}
+
+.delete-conv-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.conversation-item:hover .delete-conv-btn {
+  opacity: 1;
+}
+
+.delete-conv-btn:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
 }

@@ -6,37 +6,36 @@ export default function Sidebar({
   currentConversationId,
   onSelectConversation,
   onNewConversation,
+  onManagePersonas
 }) {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
         <h1>LLM Council</h1>
-        <button className="new-conversation-btn" onClick={onNewConversation}>
-          + New Conversation
-        </button>
+        <div className="sidebar-actions">
+          <button className="new-chat-btn" onClick={onNewConversation}>
+            + New Council
+          </button>
+          <button className="manage-personas-btn" onClick={onManagePersonas}>
+            Personas
+          </button>
+        </div>
       </div>
 
-      <div className="conversation-list">
-        {conversations.length === 0 ? (
-          <div className="no-conversations">No conversations yet</div>
-        ) : (
-          conversations.map((conv) => (
-            <div
-              key={conv.id}
-              className={`conversation-item ${
-                conv.id === currentConversationId ? 'active' : ''
+      <div className="conversations-list">
+        {conversations.map((conv) => (
+          <div
+            key={conv.id}
+            className={`conversation-item ${conv.id === currentConversationId ? 'active' : ''
               }`}
-              onClick={() => onSelectConversation(conv.id)}
-            >
-              <div className="conversation-title">
-                {conv.title || 'New Conversation'}
-              </div>
-              <div className="conversation-meta">
-                {conv.message_count} messages
-              </div>
+            onClick={() => onSelectConversation(conv.id)}
+          >
+            <div className="conversation-title">{conv.title}</div>
+            <div className="conversation-meta">
+              {new Date(conv.created_at).toLocaleDateString()} • {conv.message_count} msgs
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );

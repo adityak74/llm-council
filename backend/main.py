@@ -9,8 +9,9 @@ import uuid
 import json
 import asyncio
 
-from . import storage
+from . import storage, personas
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
 app = FastAPI(title="LLM Council API")
 
@@ -26,7 +27,15 @@ app.add_middleware(
 
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
-    pass
+    council_members: Optional[List[str]] = None  # List of model IDs or Persona IDs
+    chairman_id: Optional[str] = None  # Model ID or Persona ID
+
+
+class CreatePersonaRequest(BaseModel):
+    name: str
+    model_id: str
+    system_prompt: str
+    avatar_color: str = "#3b82f6"
 
 
 class SendMessageRequest(BaseModel):
@@ -48,6 +57,7 @@ class Conversation(BaseModel):
     created_at: str
     title: str
     messages: List[Dict[str, Any]]
+    council_config: Optional[Dict[str, Any]] = None  # Store the council configuration used
 
 
 @app.get("/")
@@ -62,11 +72,155 @@ async def list_conversations():
     return storage.list_conversations()
 
 
+@app.get("/api/models")
+async def list_models():
+    """List available models."""
+    # Combine hardcoded OpenRouter models with local Ollama models
+    # For now, we'll just return the ones in config + maybe query ollama
+    # But to keep it simple, let's just return the ones in COUNCIL_MODELS for now
+    # In a real app, we'd query Ollama and OpenRouter
+    
+    # Let's try to fetch Ollama models dynamically
+    import httpx
+    from .config import OLLAMA_BASE_URL
+    
+    models = []
+    
+    # Add OpenRouter models (hardcoded for now)
+    openrouter_models = [
+        "openai/gpt-5.1",
+        "google/gemini-3-pro-preview",
+        "anthropic/claude-sonnet-4.5",
+        "x-ai/grok-4",
+    ]
+    for m in openrouter_models:
+        models.append({"id": m, "name": m, "provider": "OpenRouter"})
+        
+    # Add Ollama models
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(OLLAMA_BASE_URL.replace("/api/chat", "/api/tags"))
+            if response.status_code == 200:
+                ollama_models = response.json().get('models', [])
+                for m in ollama_models:
+                    model_id = f"ollama/{m['name']}"
+                    models.append({"id": model_id, "name": m['name'], "provider": "Ollama"})
+    except Exception:
+        pass
+        
+    return models
+
+
+@app.get("/api/personas")
+async def list_personas():
+    """List all personas."""
+    return personas.list_personas()
+
+
+@app.post("/api/personas")
+async def create_persona(request: CreatePersonaRequest):
+    """Create a new persona."""
+    return personas.create_persona(
+        request.name,
+        request.model_id,
+        request.system_prompt,
+        request.avatar_color
+    )
+
+
+@app.delete("/api/personas/{persona_id}")
+async def delete_persona(persona_id: str):
+    """Delete a persona."""
+    success = personas.delete_persona(persona_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    return {"status": "success"}
+
+
 @app.post("/api/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""
     conversation_id = str(uuid.uuid4())
+    
+    # Resolve council members and chairman
+    # If not provided, use defaults from config
+    
+    final_council_members = []
+    final_chairman = None
+    
+    if request.council_members:
+        for member_id in request.council_members:
+            # Check if it's a persona
+            persona = personas.get_persona(member_id)
+            if persona:
+                final_council_members.append({
+                    "model_id": persona['model_id'],
+                    "name": persona['name'],
+                    "system_prompt": persona['system_prompt'],
+                    "type": "persona",
+                    "id": persona['id']
+                })
+            else:
+                # Assume it's a raw model ID
+                final_council_members.append({
+                    "model_id": member_id,
+                    "name": member_id,
+                    "system_prompt": None,
+                    "type": "model",
+                    "id": member_id
+                })
+    else:
+        # Use default config
+        for model_id in COUNCIL_MODELS:
+            final_council_members.append({
+                "model_id": model_id,
+                "name": model_id,
+                "system_prompt": None,
+                "type": "model",
+                "id": model_id
+            })
+            
+    if request.chairman_id:
+        # Check if it's a persona
+        persona = personas.get_persona(request.chairman_id)
+        if persona:
+            final_chairman = {
+                "model_id": persona['model_id'],
+                "name": persona['name'],
+                "system_prompt": persona['system_prompt'],
+                "type": "persona",
+                "id": persona['id']
+            }
+        else:
+            final_chairman = {
+                "model_id": request.chairman_id,
+                "name": request.chairman_id,
+                "system_prompt": None,
+                "type": "model",
+                "id": request.chairman_id
+            }
+    else:
+        # Use default config
+        final_chairman = {
+            "model_id": CHAIRMAN_MODEL,
+            "name": CHAIRMAN_MODEL,
+            "system_prompt": None,
+            "type": "model",
+            "id": CHAIRMAN_MODEL
+        }
+        
+    council_config = {
+        "members": final_council_members,
+        "chairman": final_chairman
+    }
+    
     conversation = storage.create_conversation(conversation_id)
+    
+    # Store config in conversation (need to update storage.py or just inject it here if storage supports extra fields)
+    # storage.create_conversation just creates a dict. We can add to it.
+    conversation["council_config"] = council_config
+    storage.save_conversation(conversation) # Helper to save back
+    
     return conversation
 
 
@@ -101,9 +255,22 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         title = await generate_conversation_title(request.content)
         storage.update_conversation_title(conversation_id, title)
 
+    # Get council config from conversation
+    council_config = conversation.get("council_config")
+    
+    # Fallback for old conversations
+    if not council_config:
+        council_members = [{"model_id": m, "name": m} for m in COUNCIL_MODELS]
+        chairman = {"model_id": CHAIRMAN_MODEL, "name": CHAIRMAN_MODEL}
+    else:
+        council_members = council_config["members"]
+        chairman = council_config["chairman"]
+
     # Run the 3-stage council process
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content
+        request.content,
+        council_members,
+        chairman
     )
 
     # Add assistant message with all stages
@@ -147,20 +314,31 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             if is_first_message:
                 title_task = asyncio.create_task(generate_conversation_title(request.content))
 
+            # Get council config from conversation
+            council_config = conversation.get("council_config")
+            
+            # Fallback for old conversations
+            if not council_config:
+                council_members = [{"model_id": m, "name": m} for m in COUNCIL_MODELS]
+                chairman = {"model_id": CHAIRMAN_MODEL, "name": CHAIRMAN_MODEL}
+            else:
+                council_members = council_config["members"]
+                chairman = council_config["chairman"]
+
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content)
+            stage1_results = await stage1_collect_responses(request.content, council_members)
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results)
+            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_members)
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results)
+            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman)
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started

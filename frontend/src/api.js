@@ -18,17 +18,79 @@ export const api = {
 
   /**
    * Create a new conversation.
+   * @param {string[]} councilMembers - Optional list of model/persona IDs
+   * @param {string} chairmanId - Optional chairman model/persona ID
    */
-  async createConversation() {
+  async createConversation(councilMembers = null, chairmanId = null) {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        council_members: councilMembers,
+        chairman_id: chairmanId,
+      }),
     });
     if (!response.ok) {
       throw new Error('Failed to create conversation');
+    }
+    return response.json();
+  },
+
+  /**
+   * List available models.
+   */
+  async listModels() {
+    const response = await fetch(`${API_BASE}/api/models`);
+    if (!response.ok) {
+      throw new Error('Failed to list models');
+    }
+    return response.json();
+  },
+
+  /**
+   * List all personas.
+   */
+  async listPersonas() {
+    const response = await fetch(`${API_BASE}/api/personas`);
+    if (!response.ok) {
+      throw new Error('Failed to list personas');
+    }
+    return response.json();
+  },
+
+  /**
+   * Create a new persona.
+   */
+  async createPersona(name, modelId, systemPrompt, avatarColor) {
+    const response = await fetch(`${API_BASE}/api/personas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        model_id: modelId,
+        system_prompt: systemPrompt,
+        avatar_color: avatarColor,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create persona');
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a persona.
+   */
+  async deletePersona(personaId) {
+    const response = await fetch(`${API_BASE}/api/personas/${personaId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete persona');
     }
     return response.json();
   },

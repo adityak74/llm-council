@@ -18,22 +18,40 @@
   color: #333;
 }
 
-.new-conversation-btn {
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.new-chat-btn,
+.manage-personas-btn {
   width: 100%;
   padding: 10px;
-  background: #4a90e2;
-  border: 1px solid #4a90e2;
   border-radius: 6px;
-  color: #fff;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.2s;
   font-weight: 500;
+  border: none;
 }
 
-.new-conversation-btn:hover {
+.new-chat-btn {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.new-chat-btn:hover {
   background: #357abd;
-  border-color: #357abd;
+}
+
+.manage-personas-btn {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.manage-personas-btn:hover {
+  background: #cbd5e1;
 }
 
 .conversation-list {

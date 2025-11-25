@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uuid
 import json
 import asyncio
@@ -86,15 +86,15 @@ async def list_models():
     
     models = []
     
-    # Add OpenRouter models (hardcoded for now)
+    # Add OpenRouter models with specific providers
     openrouter_models = [
-        "openai/gpt-5.1",
-        "google/gemini-3-pro-preview",
-        "anthropic/claude-sonnet-4.5",
-        "x-ai/grok-4",
+        {"id": "openai/gpt-5.1", "name": "GPT-5.1", "provider": "OpenAI"},
+        {"id": "google/gemini-3-pro-preview", "name": "Gemini 3 Pro", "provider": "Google"},
+        {"id": "anthropic/claude-sonnet-4.5", "name": "Claude Sonnet 4.5", "provider": "Anthropic"},
+        {"id": "x-ai/grok-4", "name": "Grok 4", "provider": "X.AI"},
     ]
     for m in openrouter_models:
-        models.append({"id": m, "name": m, "provider": "OpenRouter"})
+        models.append(m)
         
     # Add Ollama models
     try:
@@ -374,4 +374,4 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8001, reload=True)

@@ -9,6 +9,7 @@ function PersonaManager({ onClose }) {
 
     // Form state
     const [name, setName] = useState('');
+    const [selectedProvider, setSelectedProvider] = useState('');
     const [modelId, setModelId] = useState('');
     const [systemPrompt, setSystemPrompt] = useState('');
     const [avatarColor, setAvatarColor] = useState('#3b82f6');
@@ -25,13 +26,41 @@ function PersonaManager({ onClose }) {
             ]);
             setPersonas(personasData);
             setModels(modelsData);
+
+            // Set initial provider if models exist
             if (modelsData.length > 0) {
-                setModelId(modelsData[0].id);
+                const firstProvider = modelsData[0].provider;
+                setSelectedProvider(firstProvider);
+
+                // Set initial model for that provider
+                const providerModels = modelsData.filter(m => m.provider === firstProvider);
+                if (providerModels.length > 0) {
+                    setModelId(providerModels[0].id);
+                }
             }
         } catch (error) {
             console.error('Failed to load data:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Get unique providers
+    const providers = [...new Set(models.map(m => m.provider))];
+
+    // Filter models by selected provider
+    const availableModels = models.filter(m => m.provider === selectedProvider);
+
+    const handleProviderChange = (e) => {
+        const newProvider = e.target.value;
+        setSelectedProvider(newProvider);
+
+        // Reset model to first available in new provider
+        const newProviderModels = models.filter(m => m.provider === newProvider);
+        if (newProviderModels.length > 0) {
+            setModelId(newProviderModels[0].id);
+        } else {
+            setModelId('');
         }
     };
 
@@ -107,14 +136,26 @@ function PersonaManager({ onClose }) {
                             </div>
 
                             <div className="form-group">
-                                <label>Base Model</label>
+                                <label>Provider</label>
+                                <select
+                                    value={selectedProvider}
+                                    onChange={handleProviderChange}
+                                >
+                                    {providers.map(p => (
+                                        <option key={p} value={p}>{p}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Model</label>
                                 <select
                                     value={modelId}
                                     onChange={(e) => setModelId(e.target.value)}
                                 >
-                                    {models.map(m => (
+                                    {availableModels.map(m => (
                                         <option key={m.id} value={m.id}>
-                                            {m.name} ({m.provider})
+                                            {m.name}
                                         </option>
                                     ))}
                                 </select>

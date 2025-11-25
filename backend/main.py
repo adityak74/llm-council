@@ -137,6 +137,15 @@ async def delete_persona(persona_id: str):
     return {"status": "success"}
 
 
+@app.delete("/api/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str):
+    """Delete a conversation."""
+    success = storage.delete_conversation(conversation_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"status": "success"}
+
+
 @app.post("/api/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""

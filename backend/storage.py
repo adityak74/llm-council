@@ -170,3 +170,10 @@ def update_conversation_title(conversation_id: str, title: str):
 
     conversation["title"] = title
     save_conversation(conversation)
+def delete_conversation(conversation_id: str) -> bool:
+    """Delete a conversation."""
+    file_path = os.path.join(DATA_DIR, f"{conversation_id}.json")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return True
+    return False

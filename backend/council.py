@@ -327,7 +327,7 @@ Title:"""
     messages = [{"role": "user", "content": title_prompt}]
 
     # Use a small local model for title generation
-    response = await query_model("ollama/amsaravi/medgemma-4b-it:q8", messages, timeout=300.0)
+    response = await query_model("ollama/amsaravi/medgemma-4b-it:q8", messages, timeout=600.0)
 
     if response is None:
         # Fallback to a generic title

@@ -9,6 +9,7 @@ export default function ChatInterface({
   conversation,
   onSendMessage,
   isLoading,
+  onReRun
 }) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
@@ -114,6 +115,15 @@ export default function ChatInterface({
           <div className="loading-indicator">
             <div className="spinner"></div>
             <span>Consulting the council...</span>
+          </div>
+        )}
+
+        {/* Re-run button */}
+        {!isLoading && conversation.messages.length > 0 && onReRun && (
+          <div className="rerun-container">
+            <button className="rerun-btn" onClick={onReRun}>
+              ↺ Re-run Council
+            </button>
           </div>
         )}
 

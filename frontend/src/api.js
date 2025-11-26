@@ -109,6 +109,34 @@ export const api = {
   },
 
   /**
+   * Get settings.
+   */
+  async getSettings() {
+    const response = await fetch(`${API_BASE}/api/settings`);
+    if (!response.ok) {
+      throw new Error('Failed to get settings');
+    }
+    return response.json();
+  },
+
+  /**
+   * Update settings.
+   */
+  async updateSettings(settings) {
+    const response = await fetch(`${API_BASE}/api/settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(settings),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update settings');
+    }
+    return response.json();
+  },
+
+  /**
    * Get a specific conversation.
    */
   async getConversation(conversationId) {

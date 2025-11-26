@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import PersonaManager from './components/PersonaManager';
 import NewConversationDialog from './components/NewConversationDialog';
+import SettingsDialog from './components/SettingsDialog';
 import { api } from './api';
 import './App.css';
 
@@ -15,6 +16,7 @@ function App() {
   // Dialog states
   const [showPersonaManager, setShowPersonaManager] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -219,6 +221,7 @@ function App() {
         onNewConversation={() => setShowNewChatDialog(true)}
         onManagePersonas={() => setShowPersonaManager(true)}
         onDeleteConversation={handleDeleteConversation}
+        onOpenSettings={() => setShowSettings(true)}
       />
       <ChatInterface
         conversation={currentConversation}
@@ -235,6 +238,10 @@ function App() {
           onClose={() => setShowNewChatDialog(false)}
           onStart={handleStartNewConversation}
         />
+      )}
+
+      {showSettings && (
+        <SettingsDialog onClose={() => setShowSettings(false)} />
       )}
     </div>
   );

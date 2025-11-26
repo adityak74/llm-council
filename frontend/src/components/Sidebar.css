@@ -25,7 +25,8 @@
 }
 
 .new-chat-btn,
-.manage-personas-btn {
+.manage-personas-btn,
+.settings-btn {
   width: 100%;
   padding: 10px;
   border-radius: 6px;
@@ -52,6 +53,17 @@
 
 .manage-personas-btn:hover {
   background: #cbd5e1;
+}
+
+.settings-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.settings-btn:hover {
+  background: #334155;
+  color: #f8fafc;
 }
 
 .conversation-list {

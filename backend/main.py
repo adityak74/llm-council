@@ -98,8 +98,13 @@ async def list_models():
         
     # Add Ollama models
     try:
+        from .settings import get_settings
+        settings = get_settings()
+        base_url = settings.get("ollama_base_url")
+        tags_url = base_url.replace("/api/chat", "/api/tags")
+        
         async with httpx.AsyncClient(timeout=2.0) as client:
-            response = await client.get(OLLAMA_BASE_URL.replace("/api/chat", "/api/tags"))
+            response = await client.get(tags_url)
             if response.status_code == 200:
                 ollama_models = response.json().get('models', [])
                 for m in ollama_models:
@@ -109,6 +114,22 @@ async def list_models():
         pass
         
     return models
+
+
+class UpdateSettingsRequest(BaseModel):
+    ollama_base_url: str
+
+@app.get("/api/settings")
+async def get_settings():
+    """Get current settings."""
+    from . import settings
+    return settings.get_settings()
+
+@app.post("/api/settings")
+async def update_settings(request: UpdateSettingsRequest):
+    """Update settings."""
+    from . import settings
+    return settings.update_settings(request.dict())
 
 
 @app.get("/api/personas")

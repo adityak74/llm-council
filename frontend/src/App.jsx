@@ -221,6 +221,7 @@ function App() {
         onNewConversation={() => setShowNewChatDialog(true)}
         onManagePersonas={() => setShowPersonaManager(true)}
         onDeleteConversation={handleDeleteConversation}
+        onOpenSettings={() => setShowSettings(true)}
       />
       <ChatInterface
         conversation={currentConversation}

@@ -8,7 +8,7 @@ from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL, OLLAMA_BASE_URL
 async def query_model(
     model: str,
     messages: List[Dict[str, str]],
-    timeout: float = 120.0,
+    timeout: float = 300.0,
     system_prompt: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """
@@ -81,6 +81,11 @@ async def _query_ollama(
     timeout: float
 ) -> Optional[Dict[str, Any]]:
     """Query local Ollama instance."""
+    from .settings import get_settings
+    
+    settings = get_settings()
+    base_url = settings.get("ollama_base_url")
+    
     payload = {
         "model": model,
         "messages": messages,
@@ -90,7 +95,7 @@ async def _query_ollama(
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
-                OLLAMA_BASE_URL,
+                base_url,
                 json=payload
             )
             response.raise_for_status()

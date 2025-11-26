@@ -48,6 +48,13 @@ async def stage1_collect_responses(
                 "persona_name": member.get('name', member['model_id']),
                 "response": response.get('content', '')
             })
+        else:
+            # Handle failure
+            stage1_results.append({
+                "model": member['model_id'],
+                "persona_name": member.get('name', member['model_id']),
+                "response": "Error: Failed to generate response."
+            })
 
     return stage1_results
 
@@ -136,6 +143,14 @@ Now provide your evaluation and ranking:"""
                 "persona_name": member.get('name', member['model_id']),
                 "ranking": full_text,
                 "parsed_ranking": parsed
+            })
+        else:
+            # Handle failure
+            stage2_results.append({
+                "model": member['model_id'],
+                "persona_name": member.get('name', member['model_id']),
+                "ranking": "Error: Failed to generate ranking.",
+                "parsed_ranking": []
             })
 
     return stage2_results, label_to_model
@@ -312,7 +327,7 @@ Title:"""
     messages = [{"role": "user", "content": title_prompt}]
 
     # Use a small local model for title generation
-    response = await query_model("ollama/amsaravi/medgemma-4b-it:q8", messages, timeout=30.0)
+    response = await query_model("ollama/amsaravi/medgemma-4b-it:q8", messages, timeout=300.0)
 
     if response is None:
         # Fallback to a generic title

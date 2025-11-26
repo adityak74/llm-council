@@ -15,6 +15,18 @@ function NewConversationDialog({ onClose, onStart }) {
         loadData();
     }, []);
 
+    // Update chairman when selected members change
+    useEffect(() => {
+        if (selectedMembers.length > 0) {
+            // If current chairman is no longer in the list, select the first member
+            if (!selectedMembers.includes(selectedChairman)) {
+                setSelectedChairman(selectedMembers[0]);
+            }
+        } else {
+            setSelectedChairman('');
+        }
+    }, [selectedMembers, selectedChairman]);
+
     const loadData = async () => {
         try {
             const [personasData, modelsData] = await Promise.all([

@@ -75,6 +75,16 @@ async def _query_openrouter(
         return None
 
 
+import asyncio
+
+_ollama_semaphore = None
+
+def get_ollama_semaphore():
+    global _ollama_semaphore
+    if _ollama_semaphore is None:
+        _ollama_semaphore = asyncio.Semaphore(2)
+    return _ollama_semaphore
+
 async def _query_ollama(
     model: str,
     messages: List[Dict[str, str]],
@@ -92,24 +102,27 @@ async def _query_ollama(
         "stream": False
     }
 
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                base_url,
-                json=payload
-            )
-            response.raise_for_status()
+    semaphore = get_ollama_semaphore()
 
-            data = response.json()
-            
-            # Ollama response format is different from OpenAI/OpenRouter
-            # It returns 'message': {'role': 'assistant', 'content': '...'}
-            message = data.get('message', {})
-            
-            return {
-                'content': message.get('content'),
-                'reasoning_details': None # Ollama doesn't typically provide this yet
-            }
+    try:
+        async with semaphore:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    base_url,
+                    json=payload
+                )
+                response.raise_for_status()
+
+                data = response.json()
+                
+                # Ollama response format is different from OpenAI/OpenRouter
+                # It returns 'message': {'role': 'assistant', 'content': '...'}
+                message = data.get('message', {})
+                
+                return {
+                    'content': message.get('content'),
+                    'reasoning_details': None # Ollama doesn't typically provide this yet
+                }
 
     except Exception as e:
         print(f"Error querying Ollama model {model}: {e}")

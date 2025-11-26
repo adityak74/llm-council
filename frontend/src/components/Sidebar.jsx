@@ -7,7 +7,8 @@ export default function Sidebar({
   onSelectConversation,
   onNewConversation,
   onManagePersonas,
-  onDeleteConversation
+  onDeleteConversation,
+  onOpenSettings
 }) {
   const handleDelete = (e, id) => {
     e.stopPropagation();
@@ -26,6 +27,9 @@ export default function Sidebar({
           </button>
           <button className="manage-personas-btn" onClick={onManagePersonas}>
             Personas
+          </button>
+          <button className="settings-btn" onClick={onOpenSettings}>
+            Settings
           </button>
         </div>
       </div>

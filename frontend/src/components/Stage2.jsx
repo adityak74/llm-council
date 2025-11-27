@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import './Stage2.css';
 
 function deAnonymizeText(text, labelToModel) {
@@ -16,7 +16,7 @@ function deAnonymizeText(text, labelToModel) {
 }
 
 export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
-  const [activeTab, setActiveTab] = useState(0);
+
 
   if (!rankings || rankings.length === 0) {
     return null;
@@ -32,44 +32,46 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
         Below, model names are shown in <strong>bold</strong> for readability, but the original evaluation used anonymous labels.
       </p>
 
-      <div className="tabs">
+      <Tabs defaultValue="0">
+        <TabsList>
+          {rankings.map((rank, index) => (
+            <TabsTrigger key={index} value={String(index)}>
+              {rank.model.split('/')[1] || rank.model}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
         {rankings.map((rank, index) => (
-          <button
-            key={index}
-            className={`tab ${activeTab === index ? 'active' : ''}`}
-            onClick={() => setActiveTab(index)}
-          >
-            {rank.model.split('/')[1] || rank.model}
-          </button>
-        ))}
-      </div>
+          <TabsContent key={index} value={String(index)}>
+            <div className="tab-content">
+              <div className="ranking-model">
+                {rank.model}
+              </div>
+              <div className="ranking-content markdown-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {deAnonymizeText(rank.ranking, labelToModel)}
+                </ReactMarkdown>
+              </div>
 
-      <div className="tab-content">
-        <div className="ranking-model">
-          {rankings[activeTab].model}
-        </div>
-        <div className="ranking-content markdown-content">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {deAnonymizeText(rankings[activeTab].ranking, labelToModel)}
-          </ReactMarkdown>
-        </div>
-
-        {rankings[activeTab].parsed_ranking &&
-          rankings[activeTab].parsed_ranking.length > 0 && (
-            <div className="parsed-ranking">
-              <strong>Extracted Ranking:</strong>
-              <ol>
-                {rankings[activeTab].parsed_ranking.map((label, i) => (
-                  <li key={i}>
-                    {labelToModel && labelToModel[label]
-                      ? labelToModel[label].split('/')[1] || labelToModel[label]
-                      : label}
-                  </li>
-                ))}
-              </ol>
+              {rank.parsed_ranking &&
+                rank.parsed_ranking.length > 0 && (
+                  <div className="parsed-ranking">
+                    <strong>Extracted Ranking:</strong>
+                    <ol>
+                      {rank.parsed_ranking.map((label, i) => (
+                        <li key={i}>
+                          {labelToModel && labelToModel[label]
+                            ? labelToModel[label].split('/')[1] || labelToModel[label]
+                            : label}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
             </div>
-          )}
-      </div>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {aggregateRankings && aggregateRankings.length > 0 && (
         <div className="aggregate-rankings">

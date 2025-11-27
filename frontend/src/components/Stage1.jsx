@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import './Stage1.css';
 
 export default function Stage1({ responses }) {
-  const [activeTab, setActiveTab] = useState(0);
+
 
   if (!responses || responses.length === 0) {
     return null;
@@ -14,24 +14,26 @@ export default function Stage1({ responses }) {
     <div className="stage stage1">
       <h3 className="stage-title">Stage 1: Individual Responses</h3>
 
-      <div className="tabs">
-        {responses.map((resp, index) => (
-          <button
-            key={index}
-            className={`tab ${activeTab === index ? 'active' : ''}`}
-            onClick={() => setActiveTab(index)}
-          >
-            {resp.model.split('/')[1] || resp.model}
-          </button>
-        ))}
-      </div>
+      <Tabs defaultValue="0">
+        <TabsList>
+          {responses.map((resp, index) => (
+            <TabsTrigger key={index} value={String(index)}>
+              {resp.model.split('/')[1] || resp.model}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="tab-content">
-        <div className="model-name">{responses[activeTab].model}</div>
-        <div className="response-text markdown-content">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{responses[activeTab].response}</ReactMarkdown>
-        </div>
-      </div>
+        {responses.map((resp, index) => (
+          <TabsContent key={index} value={String(index)}>
+            <div className="tab-content">
+              <div className="model-name">{resp.model}</div>
+              <div className="response-text markdown-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{resp.response}</ReactMarkdown>
+              </div>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }

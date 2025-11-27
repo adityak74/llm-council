@@ -1,0 +1,74 @@
+/* Select.css */
+.SelectTrigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 6px;
+    padding: 0 15px;
+    font-size: 14px;
+    line-height: 1;
+    height: 40px;
+    gap: 5px;
+    background-color: var(--bg-input);
+    color: var(--text-dialog);
+    border: 1px solid var(--border-input);
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+}
+
+.SelectTrigger:hover {
+    background-color: var(--bg-hover);
+}
+
+.SelectTrigger:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.SelectIcon {
+    color: var(--text-secondary);
+    font-size: 10px;
+}
+
+.SelectContent {
+    overflow: hidden;
+    background-color: var(--bg-dialog);
+    border-radius: 6px;
+    box-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+    border: 1px solid var(--border-color);
+    z-index: 1002;
+}
+
+.SelectViewport {
+    padding: 5px;
+}
+
+.SelectItem {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--text-dialog);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 35px 0 25px;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+}
+
+.SelectItem[data-highlighted] {
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
+    outline: none;
+}
+
+.SelectItemIndicator {
+    position: absolute;
+    left: 0;
+    width: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

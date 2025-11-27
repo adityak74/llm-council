@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from './ui/Dialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
+import { ScrollArea } from './ui/ScrollArea';
+import { useToast } from './ui/Toast';
 import { api } from '../api';
 import './NewConversationDialog.css';
 
-function NewConversationDialog({ onClose, onStart }) {
+function NewConversationDialog({ isOpen, onClose, onStart }) {
     const [personas, setPersonas] = useState([]);
     const [models, setModels] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -11,6 +15,8 @@ function NewConversationDialog({ onClose, onStart }) {
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [selectedChairman, setSelectedChairman] = useState('');
     const [conversationType, setConversationType] = useState('standard');
+
+    const { toast, ToastComponent } = useToast();
 
     useEffect(() => {
         loadData();
@@ -51,6 +57,26 @@ function NewConversationDialog({ onClose, onStart }) {
         }
     };
 
+    const handleStart = () => {
+        if (selectedMembers.length === 0) {
+            toast({
+                title: "Selection Required",
+                description: "Please select at least one council member.",
+                type: "error"
+            });
+            return;
+        }
+        if (!selectedChairman) {
+            toast({
+                title: "Selection Required",
+                description: "Please select a Chairman.",
+                type: "error"
+            });
+            return;
+        }
+        onStart(selectedMembers, selectedChairman, conversationType);
+    };
+
     const handleToggleMember = (id) => {
         setSelectedMembers(prev => {
             if (prev.includes(id)) {
@@ -61,18 +87,6 @@ function NewConversationDialog({ onClose, onStart }) {
         });
     };
 
-    const handleStart = () => {
-        if (selectedMembers.length === 0) {
-            alert('Please select at least one council member.');
-            return;
-        }
-        if (!selectedChairman) {
-            alert('Please select a Chairman.');
-            return;
-        }
-        onStart(selectedMembers, selectedChairman, conversationType);
-    };
-
     // Combine models and personas for display
     const allOptions = [
         ...personas.map(p => ({ ...p, type: 'persona', label: p.name, sub: p.model_id })),
@@ -80,14 +94,9 @@ function NewConversationDialog({ onClose, onStart }) {
     ];
 
     return (
-        <div className="new-chat-overlay">
-            <div className="new-chat-modal">
-                <div className="modal-header">
-                    <h2>Start New Council</h2>
-                    <button className="close-btn" onClick={onClose}>&times;</button>
-                </div>
-
-                <div className="modal-content-scroll">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent title="Start New Council" className="large-dialog">
+                <ScrollArea className="modal-content-scroll">
                     {isLoading ? (
                         <p>Loading...</p>
                     ) : (
@@ -115,18 +124,18 @@ function NewConversationDialog({ onClose, onStart }) {
                             <div className="section">
                                 <h3>2. Select Chairman</h3>
                                 <p className="subtitle">Choose who will synthesize the final answer.</p>
-                                <select
-                                    value={selectedChairman}
-                                    onChange={(e) => setSelectedChairman(e.target.value)}
-                                    className="chairman-select"
-                                >
-                                    <option value="" disabled>Select a Chairman</option>
-                                    {allOptions.filter(opt => selectedMembers.includes(opt.id)).map(opt => (
-                                        <option key={opt.id} value={opt.id}>
-                                            {opt.label} ({opt.type === 'persona' ? 'Persona' : 'Model'})
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select value={selectedChairman} onValueChange={setSelectedChairman}>
+                                    <SelectTrigger className="chairman-select">
+                                        <SelectValue placeholder="Select a Chairman" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allOptions.filter(opt => selectedMembers.includes(opt.id)).map(opt => (
+                                            <SelectItem key={opt.id} value={opt.id}>
+                                                {opt.label} ({opt.type === 'persona' ? 'Persona' : 'Model'})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="section">
@@ -155,7 +164,7 @@ function NewConversationDialog({ onClose, onStart }) {
                             </div>
                         </>
                     )}
-                </div>
+                </ScrollArea>
 
                 <div className="modal-footer">
                     <button className="cancel-btn" onClick={onClose}>Cancel</button>
@@ -163,8 +172,9 @@ function NewConversationDialog({ onClose, onStart }) {
                         Start Conversation
                     </button>
                 </div>
-            </div>
-        </div>
+                {ToastComponent}
+            </DialogContent>
+        </Dialog>
     );
 }
 

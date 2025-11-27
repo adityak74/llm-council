@@ -47,15 +47,12 @@ def create_conversation(conversation_id: str, conversation_type: str = "standard
     return conversation
 
 
+import uuid
+
 def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
     """
     Load a conversation from storage.
-
-    Args:
-        conversation_id: Unique identifier for the conversation
-
-    Returns:
-        Conversation dict or None if not found
+    Ensures all messages have IDs and pinned status.
     """
     path = get_conversation_path(conversation_id)
 
@@ -63,7 +60,22 @@ def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
         return None
 
     with open(path, 'r') as f:
-        return json.load(f)
+        data = json.load(f)
+        
+    # Lazy migration: Ensure all messages have IDs and pinned status
+    modified = False
+    for msg in data.get("messages", []):
+        if "id" not in msg:
+            msg["id"] = str(uuid.uuid4())
+            modified = True
+        if "pinned" not in msg:
+            msg["pinned"] = False
+            modified = True
+            
+    if modified:
+        save_conversation(data)
+        
+    return data
 
 
 def save_conversation(conversation: Dict[str, Any]):
@@ -93,16 +105,19 @@ def list_conversations() -> List[Dict[str, Any]]:
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.json'):
             path = os.path.join(DATA_DIR, filename)
-            with open(path, 'r') as f:
-                data = json.load(f)
-                # Return metadata only
-                conversations.append({
-                    "id": data["id"],
-                    "created_at": data["created_at"],
-                    "title": data.get("title", "New Conversation"),
-                    "message_count": len(data["messages"]),
-                    "conversation_type": data.get("conversation_type", "standard")
-                })
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    # Return metadata only
+                    conversations.append({
+                        "id": data["id"],
+                        "created_at": data["created_at"],
+                        "title": data.get("title", "New Conversation"),
+                        "message_count": len(data["messages"]),
+                        "conversation_type": data.get("conversation_type", "standard")
+                    })
+            except Exception:
+                continue
 
     # Sort by creation time, newest first
     conversations.sort(key=lambda x: x["created_at"], reverse=True)
@@ -123,8 +138,10 @@ def add_user_message(conversation_id: str, content: str):
         raise ValueError(f"Conversation {conversation_id} not found")
 
     conversation["messages"].append({
+        "id": str(uuid.uuid4()),
         "role": "user",
-        "content": content
+        "content": content,
+        "pinned": False
     })
 
     save_conversation(conversation)
@@ -152,10 +169,12 @@ def add_assistant_message(
         raise ValueError(f"Conversation {conversation_id} not found")
 
     message = {
+        "id": str(uuid.uuid4()),
         "role": "assistant",
         "stage1": stage1,
         "stage2": stage2,
-        "stage3": stage3
+        "stage3": stage3,
+        "pinned": False
     }
     
     if metadata:
@@ -164,6 +183,30 @@ def add_assistant_message(
     conversation["messages"].append(message)
 
     save_conversation(conversation)
+
+
+def toggle_message_pin(conversation_id: str, message_id: str) -> bool:
+    """
+    Toggle the pinned status of a message.
+    
+    Args:
+        conversation_id: Conversation identifier
+        message_id: Message identifier
+        
+    Returns:
+        New pinned status (bool)
+    """
+    conversation = get_conversation(conversation_id)
+    if conversation is None:
+        raise ValueError(f"Conversation {conversation_id} not found")
+        
+    for msg in conversation["messages"]:
+        if msg.get("id") == message_id:
+            msg["pinned"] = not msg.get("pinned", False)
+            save_conversation(conversation)
+            return msg["pinned"]
+            
+    raise ValueError(f"Message {message_id} not found in conversation {conversation_id}")
 
 
 def update_conversation_title(conversation_id: str, title: str):

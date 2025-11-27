@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/Avatar';
+import { ScrollArea } from './ui/ScrollArea';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/Tooltip';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
@@ -10,10 +13,18 @@ export default function ChatInterface({
   conversation,
   onSendMessage,
   isLoading,
-  onReRun
+  onReRun,
+  onTogglePin
 }) {
   const [input, setInput] = useState('');
+  const [showAllMessages, setShowAllMessages] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const handleTogglePin = (messageId) => {
+    if (onTogglePin) {
+      onTogglePin(messageId);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,106 +62,158 @@ export default function ChatInterface({
   }
 
   return (
-    <div className="chat-interface">
-      <div className="messages-container">
-        {conversation.messages.length === 0 ? (
-          <div className="empty-state">
-            <h2>Start a conversation</h2>
-            <p>Ask a question to consult the LLM Council</p>
-          </div>
-        ) : (
-          conversation.messages.map((msg, index) => (
-            <div key={index} className="message-group">
-              {msg.role === 'user' ? (
-                <div className="user-message">
-                  <div className="message-label">You</div>
-                  <div className="message-content">
-                    <div className="markdown-content">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                    </div>
+    <TooltipProvider>
+      <div className="chat-interface">
+        <ScrollArea className="messages-scroll-area">
+          <div className="messages-container">
+            {conversation.messages.length === 0 ? (
+              <div className="empty-state">
+                <h2>Start a conversation</h2>
+                <p>Ask a question to consult the LLM Council</p>
+              </div>
+            ) : (
+              <>
+                {conversation.messages.length > 5 && (
+                  <div className="show-more-container">
+                    <button
+                      className="show-more-btn"
+                      onClick={() => setShowAllMessages(!showAllMessages)}
+                    >
+                      {showAllMessages
+                        ? 'Show less'
+                        : `Show ${conversation.messages.length - 5} previous messages`}
+                    </button>
                   </div>
-                </div>
-              ) : (
-                <div className="assistant-message">
-                  <div className="message-label">LLM Council</div>
+                )}
+                {(showAllMessages ? conversation.messages : conversation.messages.slice(-5)).map((msg) => (
+                  <div key={conversation.messages.indexOf(msg)} className={`message-group ${msg.pinned ? 'pinned' : ''}`}>
+                    {msg.role === 'user' ? (
+                      <div className="user-message">
+                        <div className="message-header-row">
+                          <Avatar className="message-avatar user">
+                            <AvatarFallback>U</AvatarFallback>
+                          </Avatar>
+                          <button
+                            className={`pin-btn ${msg.pinned ? 'active' : ''}`}
+                            onClick={() => handleTogglePin(msg.id)}
+                            title={msg.pinned ? "Unpin message" : "Pin message"}
+                          >
+                            {msg.pinned ? '★' : '☆'}
+                          </button>
+                        </div>
+                        <div className="message-content">
+                          <div className="markdown-content">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="assistant-message">
+                        <div className="message-header">
+                          <div className="header-left">
+                            <Avatar className="message-avatar assistant">
+                              <AvatarFallback>AI</AvatarFallback>
+                            </Avatar>
+                            <span className="message-label">LLM Council</span>
+                          </div>
+                          <button
+                            className={`pin-btn ${msg.pinned ? 'active' : ''}`}
+                            onClick={() => handleTogglePin(msg.id)}
+                            title={msg.pinned ? "Unpin message" : "Pin message"}
+                          >
+                            {msg.pinned ? '★' : '☆'}
+                          </button>
+                        </div>
 
-                  {/* Stage 1 */}
-                  {msg.loading?.stage1 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>Running Stage 1: Collecting individual responses...</span>
-                    </div>
-                  )}
-                  {msg.stage1 && <Stage1 responses={msg.stage1} />}
+                        {/* Stage 1 */}
+                        {msg.loading?.stage1 && (
+                          <div className="stage-loading">
+                            <div className="spinner"></div>
+                            <span>Running Stage 1: Collecting individual responses...</span>
+                          </div>
+                        )}
+                        {msg.stage1 && <Stage1 responses={msg.stage1} />}
 
-                  {/* Stage 2 */}
-                  {msg.loading?.stage2 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>Running Stage 2: Peer rankings...</span>
-                    </div>
-                  )}
-                  {msg.stage2 && (
-                    <Stage2
-                      rankings={msg.stage2}
-                      labelToModel={msg.metadata?.label_to_model}
-                      aggregateRankings={msg.metadata?.aggregate_rankings}
-                    />
-                  )}
+                        {/* Stage 2 */}
+                        {msg.loading?.stage2 && (
+                          <div className="stage-loading">
+                            <div className="spinner"></div>
+                            <span>Running Stage 2: Peer rankings...</span>
+                          </div>
+                        )}
+                        {msg.stage2 && (
+                          <Stage2
+                            rankings={msg.stage2}
+                            labelToModel={msg.metadata?.label_to_model}
+                            aggregateRankings={msg.metadata?.aggregate_rankings}
+                          />
+                        )}
 
-                  {/* Stage 3 */}
-                  {msg.loading?.stage3 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>Running Stage 3: Final synthesis...</span>
-                    </div>
-                  )}
-                  {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
-                </div>
-              )}
-            </div>
-          ))
-        )}
+                        {/* Stage 3 */}
+                        {msg.loading?.stage3 && (
+                          <div className="stage-loading">
+                            <div className="spinner"></div>
+                            <span>Running Stage 3: Final synthesis...</span>
+                          </div>
+                        )}
+                        {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
 
-        {isLoading && (
-          <div className="loading-indicator">
-            <div className="spinner"></div>
-            <span>Consulting the council...</span>
+            {isLoading && (
+              <div className="loading-indicator">
+                <div className="spinner"></div>
+                <span>Consulting the council...</span>
+              </div>
+            )}
+
+            {/* Re-run button (Standard Council only) */}
+            {!isLoading && conversation.messages.length > 0 && conversation.conversation_type !== 'agentic' && onReRun && (
+              <div className="rerun-container">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="rerun-btn" onClick={onReRun}>
+                      ↺ Re-run Council
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restart the debate with the same prompt</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
-        )}
+        </ScrollArea>
 
-        {/* Re-run button */}
-        {!isLoading && conversation.messages.length > 0 && onReRun && (
-          <div className="rerun-container">
-            <button className="rerun-btn" onClick={onReRun}>
-              ↺ Re-run Council
+        {(conversation.messages.length === 0 || conversation.conversation_type === 'agentic') && (
+          <form className="input-form" onSubmit={handleSubmit}>
+            <textarea
+              className="message-input"
+              placeholder={
+                conversation.messages.length === 0
+                  ? "Ask your question... (Shift+Enter for new line, Enter to send)"
+                  : "Provide guidance or ask a follow-up question..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading}
+              rows={3}
+            />
+            <button
+              type="submit"
+              className="send-button"
+              disabled={!input.trim() || isLoading}
+            >
+              Send
             </button>
-          </div>
+          </form>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
-
-      {conversation.messages.length === 0 && (
-        <form className="input-form" onSubmit={handleSubmit}>
-          <textarea
-            className="message-input"
-            placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-            rows={3}
-          />
-          <button
-            type="submit"
-            className="send-button"
-            disabled={!input.trim() || isLoading}
-          >
-            Send
-          </button>
-        </form>
-      )}
-    </div>
+    </TooltipProvider>
   );
 }

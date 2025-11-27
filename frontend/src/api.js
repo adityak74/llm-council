@@ -172,6 +172,22 @@ export const api = {
   },
 
   /**
+   * Toggle the pinned status of a message.
+   */
+  async toggleMessagePin(conversationId, messageId) {
+    const response = await fetch(
+      `${API_BASE}/api/conversations/${conversationId}/messages/${messageId}/toggle_pin`,
+      {
+        method: 'POST',
+      }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to toggle pin');
+    }
+    return response.json();
+  },
+
+  /**
    * Send a message and receive streaming updates.
    * @param {string} conversationId - The conversation ID
    * @param {string} content - The message content

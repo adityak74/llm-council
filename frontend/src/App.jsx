@@ -5,6 +5,7 @@ import PersonaManager from './components/PersonaManager';
 import NewConversationDialog from './components/NewConversationDialog';
 import SettingsDialog from './components/SettingsDialog';
 import { ThemeProvider } from './ThemeContext';
+import { ToastProvider, ToastViewport } from './components/ui/Toast';
 import { api } from './api';
 import './App.css';
 
@@ -18,6 +19,7 @@ function App() {
   const [isPersonaManagerOpen, setIsPersonaManagerOpen] = useState(false);
   const [isNewConversationDialogOpen, setIsNewConversationDialogOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Load conversations on mount
   useEffect(() => {
@@ -373,43 +375,58 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="app">
-        <Sidebar
-          conversations={conversations}
-          currentConversationId={currentConversationId}
-          onSelectConversation={handleSelectConversation}
-          onNewConversation={() => setIsNewConversationDialogOpen(true)}
-          onDeleteConversation={handleDeleteConversation}
-          onManagePersonas={() => setIsPersonaManagerOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
-        <ChatInterface
-          conversation={currentConversation}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          onReRun={handleReRun}
-        />
+      <ToastProvider>
+        <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+          <Sidebar
+            conversations={conversations}
+            currentConversationId={currentConversationId}
+            onSelectConversation={handleSelectConversation}
+            onNewConversation={() => setIsNewConversationDialogOpen(true)}
+            onManagePersonas={() => setIsPersonaManagerOpen(true)}
+            onDeleteConversation={handleDeleteConversation}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
 
-        {isPersonaManagerOpen && (
-          <PersonaManager onClose={() => setIsPersonaManagerOpen(false)} />
-        )}
+          <ChatInterface
+            conversation={currentConversation}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            onReRun={handleReRun}
+            onTogglePin={async (messageId) => {
+              try {
+                const result = await api.toggleMessagePin(currentConversationId, messageId);
+                // Update local state
+                setCurrentConversation(prev => ({
+                  ...prev,
+                  messages: prev.messages.map(msg =>
+                    msg.id === messageId ? { ...msg, pinned: result.pinned } : msg
+                  )
+                }));
+              } catch (error) {
+                console.error('Failed to toggle pin:', error);
+              }
+            }}
+          />
 
-        {isNewConversationDialogOpen && (
+          <PersonaManager
+            isOpen={isPersonaManagerOpen}
+            onClose={() => setIsPersonaManagerOpen(false)}
+          />
+
           <NewConversationDialog
             isOpen={isNewConversationDialogOpen}
             onClose={() => setIsNewConversationDialogOpen(false)}
             onStart={handleStartNewConversation}
-            personas={personas} // Pass personas if needed, or fetch inside
           />
-        )}
 
-        {isSettingsOpen && (
           <SettingsDialog
             isOpen={isSettingsOpen}
             onClose={() => setIsSettingsOpen(false)}
           />
-        )}
-      </div>
+
+          <ToastViewport />
+        </div>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

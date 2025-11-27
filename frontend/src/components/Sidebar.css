@@ -66,28 +66,29 @@
   color: var(--bg-primary);
 }
 
-.theme-toggle-btn {
-  width: 100%;
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 10px;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  cursor: pointer;
+}
+
+.theme-label {
   font-size: 14px;
-  transition: background 0.2s;
-  font-weight: 500;
-  background: transparent;
-  color: var(--text-tertiary);
-  border: 1px solid var(--text-secondary);
 }
 
-.theme-toggle-btn:hover {
-  background: var(--text-secondary);
-  color: var(--bg-primary);
-}
 
-.conversation-list {
+
+.conversations-list-scroll {
   flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+  overflow: hidden;
+}
+
+.conversations-list {
+  padding: 10px;
 }
 
 .no-conversations {
@@ -129,6 +130,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agentic-icon {
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .conversation-meta {

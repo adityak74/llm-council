@@ -170,6 +170,16 @@ async def delete_conversation(conversation_id: str):
     return {"status": "success"}
 
 
+@app.post("/api/conversations/{conversation_id}/messages/{message_id}/toggle_pin")
+async def toggle_message_pin(conversation_id: str, message_id: str):
+    """Toggle the pinned status of a message."""
+    try:
+        new_status = storage.toggle_message_pin(conversation_id, message_id)
+        return {"status": "success", "pinned": new_status}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @app.post("/api/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""

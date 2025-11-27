@@ -6,10 +6,18 @@
   background: var(--bg-primary);
 }
 
-.messages-container {
+.messages-scroll-area {
   flex: 1;
-  overflow-y: auto;
-  padding: 24px;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .empty-state {
@@ -34,18 +42,6 @@
 }
 
 .message-group {
-  margin-bottom: 32px;
-}
-
-.user-message,
-.assistant-message {
-  margin-bottom: 16px;
-}
-
-.message-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -182,4 +178,117 @@
   cursor: not-allowed;
   background: var(--text-tertiary);
   border-color: var(--text-tertiary);
+}
+
+.rerun-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.rerun-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rerun-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+  transform: translateY(-1px);
+}
+
+.show-more-container {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 20px 0;
+}
+
+.show-more-btn {
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.show-more-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.message-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--bg-primary);
+  padding: 8px 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--bg-primary);
+  padding: 8px 0;
+}
+
+.pin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-tertiary);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.message-group:hover .pin-btn,
+.pin-btn.active {
+  opacity: 1;
+}
+
+.pin-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.pin-btn.active {
+  color: var(--primary-color);
+}
+
+.message-group.pinned .user-message .message-content,
+.message-group.pinned .assistant-message {
+  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }

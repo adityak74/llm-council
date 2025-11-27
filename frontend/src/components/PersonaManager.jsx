@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from './ui/Dialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from './ui/AlertDialog';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/Avatar';
 import { api } from '../api';
 import './PersonaManager.css';
 
-function PersonaManager({ onClose }) {
+function PersonaManager({ isOpen, onClose }) {
     const [personas, setPersonas] = useState([]);
     const [models, setModels] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -51,8 +55,7 @@ function PersonaManager({ onClose }) {
     // Filter models by selected provider
     const availableModels = models.filter(m => m.provider === selectedProvider);
 
-    const handleProviderChange = (e) => {
-        const newProvider = e.target.value;
+    const handleProviderChange = (newProvider) => {
         setSelectedProvider(newProvider);
 
         // Reset model to first available in new provider
@@ -77,7 +80,6 @@ function PersonaManager({ onClose }) {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this persona?')) return;
         try {
             await api.deletePersona(id);
             loadData();
@@ -87,13 +89,8 @@ function PersonaManager({ onClose }) {
     };
 
     return (
-        <div className="persona-manager-overlay">
-            <div className="persona-manager-modal">
-                <div className="modal-header">
-                    <h2>Manage Personas</h2>
-                    <button className="close-btn" onClick={onClose}>&times;</button>
-                </div>
-
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent title="Manage Personas" className="large-dialog">
                 <div className="modal-content">
                     <div className="persona-list">
                         <h3>Existing Personas</h3>
@@ -106,15 +103,31 @@ function PersonaManager({ onClose }) {
                                 {personas.map(p => (
                                     <li key={p.id} className="persona-item">
                                         <div className="persona-info">
-                                            <div className="persona-avatar" style={{ backgroundColor: p.avatar_color }}>
-                                                {p.name[0]}
-                                            </div>
+                                            <Avatar className="persona-avatar" style={{ backgroundColor: p.avatar_color }}>
+                                                <AvatarFallback>{p.name[0]}</AvatarFallback>
+                                            </Avatar>
                                             <div>
                                                 <strong>{p.name}</strong>
                                                 <span className="model-badge">{p.model_id}</span>
                                             </div>
                                         </div>
-                                        <button className="delete-btn" onClick={() => handleDelete(p.id)}>Delete</button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <button className="delete-btn">Delete</button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Persona</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to delete "{p.name}"? This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(p.id)}>Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </li>
                                 ))}
                             </ul>
@@ -137,28 +150,32 @@ function PersonaManager({ onClose }) {
 
                             <div className="form-group">
                                 <label>Provider</label>
-                                <select
-                                    value={selectedProvider}
-                                    onChange={handleProviderChange}
-                                >
-                                    {providers.map(p => (
-                                        <option key={p} value={p}>{p}</option>
-                                    ))}
-                                </select>
+                                <Select value={selectedProvider} onValueChange={handleProviderChange}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Provider" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {providers.map(p => (
+                                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="form-group">
                                 <label>Model</label>
-                                <select
-                                    value={modelId}
-                                    onChange={(e) => setModelId(e.target.value)}
-                                >
-                                    {availableModels.map(m => (
-                                        <option key={m.id} value={m.id}>
-                                            {m.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select value={modelId} onValueChange={setModelId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Model" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableModels.map(m => (
+                                            <SelectItem key={m.id} value={m.id}>
+                                                {m.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="form-group">
@@ -185,8 +202,8 @@ function PersonaManager({ onClose }) {
                         </form>
                     </div>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 

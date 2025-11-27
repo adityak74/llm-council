@@ -25,9 +25,9 @@
 }
 
 .modal-content-scroll {
-    padding: 24px;
-    overflow-y: auto;
     flex: 1;
+    overflow: hidden;
+    padding: 20px;
 }
 
 .section {

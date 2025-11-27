@@ -20,8 +20,9 @@ export const api = {
    * Create a new conversation.
    * @param {string[]} councilMembers - Optional list of model/persona IDs
    * @param {string} chairmanId - Optional chairman model/persona ID
+   * @param {string} conversationType - Optional conversation type ("standard" or "agentic")
    */
-  async createConversation(councilMembers = null, chairmanId = null) {
+  async createConversation(councilMembers = null, chairmanId = null, conversationType = 'standard') {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
       headers: {
@@ -30,6 +31,7 @@ export const api = {
       body: JSON.stringify({
         council_members: councilMembers,
         chairman_id: chairmanId,
+        conversation_type: conversationType,
       }),
     });
     if (!response.ok) {

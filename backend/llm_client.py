@@ -43,8 +43,13 @@ async def _query_openrouter(
     timeout: float
 ) -> Optional[Dict[str, Any]]:
     """Query OpenRouter API."""
+    from .settings import get_settings
+    
+    settings = get_settings()
+    api_key = settings.get("openrouter_api_key") or OPENROUTER_API_KEY
+    
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
 

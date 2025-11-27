@@ -385,33 +385,77 @@ function App() {
             onManagePersonas={() => setIsPersonaManagerOpen(true)}
             onDeleteConversation={handleDeleteConversation}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           />
 
-          <ChatInterface
-            conversation={currentConversation}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            onReRun={handleReRun}
-            onTogglePin={async (messageId) => {
-              try {
-                const result = await api.toggleMessagePin(currentConversationId, messageId);
-                // Update local state
-                setCurrentConversation(prev => ({
-                  ...prev,
-                  messages: prev.messages.map(msg =>
-                    msg.id === messageId ? { ...msg, pinned: result.pinned } : msg
-                  )
-                }));
-              } catch (error) {
-                console.error('Failed to toggle pin:', error);
-              }
-            }}
-          />
+          {!isSidebarOpen && (
+            <button
+              className="sidebar-toggle-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              title="Open sidebar"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+            </button>
+          )}
 
-          <PersonaManager
-            isOpen={isPersonaManagerOpen}
-            onClose={() => setIsPersonaManagerOpen(false)}
-          />
+          {isPersonaManagerOpen ? (
+            <PersonaManager onClose={() => setIsPersonaManagerOpen(false)} />
+          ) : (
+            <ChatInterface
+              conversation={currentConversation}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              onReRun={handleReRun}
+              onTogglePin={async (messageId) => {
+                try {
+                  const result = await api.toggleMessagePin(currentConversationId, messageId);
+                  // Update local state
+                  setCurrentConversation(prev => ({
+                    ...prev,
+                    messages: prev.messages.map(msg =>
+                      msg.id === messageId ? { ...msg, pinned: result.pinned } : msg
+                    )
+                  }));
+                } catch (error) {
+                  console.error('Failed to toggle pin:', error);
+                }
+              }}
+              onQuickStart={async (message, type, members, chairmanId) => {
+                try {
+                  // 1. Create Conversation
+                  // Use passed chairmanId, or default to first member if not provided
+                  const finalChairmanId = chairmanId || (members.length > 0 ? members[0] : null);
+
+                  const newConv = await api.createConversation(members, finalChairmanId, type);
+
+                  // 2. Update List and Set Current
+                  const convList = await api.listConversations();
+                  setConversations(convList);
+                  setCurrentConversationId(newConv.id);
+
+                  // Set initial state for optimistic UI
+                  setCurrentConversation({
+                    ...newConv,
+                    messages: [] // Start empty, handleSendMessage will add user msg
+                  });
+
+                  // 3. Send Message using shared logic
+                  await handleSendMessage(message, newConv.id);
+
+                } catch (error) {
+                  console.error('Quick start failed:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to start conversation.",
+                    type: "error"
+                  });
+                }
+              }}
+            />
+          )}
 
           <NewConversationDialog
             isOpen={isNewConversationDialogOpen}

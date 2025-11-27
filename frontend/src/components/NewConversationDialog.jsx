@@ -6,27 +6,44 @@ import { useToast } from './ui/Toast';
 import { api } from '../api';
 import './NewConversationDialog.css';
 
-function NewConversationDialog({ isOpen, onClose, onStart }) {
+function NewConversationDialog({
+    isOpen,
+    onClose,
+    onStart,
+    confirmText = "Start Conversation",
+    initialSelectedMembers = [],
+    initialSelectedChairman = '',
+    initialConversationType = 'standard'
+}) {
     const [personas, setPersonas] = useState([]);
     const [models, setModels] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // Selection state
-    const [selectedMembers, setSelectedMembers] = useState([]);
-    const [selectedChairman, setSelectedChairman] = useState('');
-    const [conversationType, setConversationType] = useState('standard');
+    const [selectedMembers, setSelectedMembers] = useState(initialSelectedMembers);
+    const [selectedChairman, setSelectedChairman] = useState(initialSelectedChairman);
+    const [conversationType, setConversationType] = useState(initialConversationType);
 
     const { toast, ToastComponent } = useToast();
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (isOpen) {
+            loadData();
+            // Reset to initial values when opened
+            if (initialSelectedMembers.length > 0) setSelectedMembers(initialSelectedMembers);
+            if (initialSelectedChairman) setSelectedChairman(initialSelectedChairman);
+            if (initialConversationType) setConversationType(initialConversationType);
+        }
+    }, [isOpen, initialSelectedMembers, initialSelectedChairman, initialConversationType]);
 
     // Update chairman when selected members change
     useEffect(() => {
         if (selectedMembers.length > 0) {
             // If current chairman is no longer in the list, select the first member
-            if (!selectedMembers.includes(selectedChairman)) {
+            // But only if we have loaded data (to avoid premature switching)
+            if (selectedChairman && !selectedMembers.includes(selectedChairman)) {
+                setSelectedChairman(selectedMembers[0]);
+            } else if (!selectedChairman) {
                 setSelectedChairman(selectedMembers[0]);
             }
         } else {
@@ -43,12 +60,13 @@ function NewConversationDialog({ isOpen, onClose, onStart }) {
             setPersonas(personasData);
             setModels(modelsData);
 
-            // Default selection: Select first 3 models if available
-            const defaults = modelsData.slice(0, 3).map(m => m.id);
-            setSelectedMembers(defaults);
-
-            if (defaults.length > 0) {
-                setSelectedChairman(defaults[0]);
+            // Default selection only if no initial selection provided
+            if (initialSelectedMembers.length === 0) {
+                const defaults = modelsData.slice(0, 3).map(m => m.id);
+                setSelectedMembers(defaults);
+                if (defaults.length > 0) {
+                    setSelectedChairman(defaults[0]);
+                }
             }
         } catch (error) {
             console.error('Failed to load data:', error);
@@ -169,7 +187,7 @@ function NewConversationDialog({ isOpen, onClose, onStart }) {
                 <div className="modal-footer">
                     <button className="cancel-btn" onClick={onClose}>Cancel</button>
                     <button className="start-btn" onClick={handleStart} disabled={isLoading}>
-                        Start Conversation
+                        {confirmText}
                     </button>
                 </div>
                 {ToastComponent}

@@ -10,7 +10,8 @@ def get_settings() -> Dict[str, Any]:
     """Get current settings."""
     if not os.path.exists(SETTINGS_FILE):
         return {
-            "ollama_base_url": DEFAULT_OLLAMA_URL
+            "ollama_base_url": DEFAULT_OLLAMA_URL,
+            "openrouter_api_key": ""
         }
     
     try:
@@ -18,7 +19,8 @@ def get_settings() -> Dict[str, Any]:
             return json.load(f)
     except Exception:
         return {
-            "ollama_base_url": DEFAULT_OLLAMA_URL
+            "ollama_base_url": DEFAULT_OLLAMA_URL,
+            "openrouter_api_key": ""
         }
 
 def update_settings(new_settings: Dict[str, Any]) -> Dict[str, Any]:

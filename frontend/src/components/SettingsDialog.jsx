@@ -72,13 +72,26 @@ function SettingsDialog({ isOpen, onClose }) {
                             <input
                                 id="ollama-url"
                                 type="text"
-                                value={ollamaUrl}
-                                onChange={(e) => setOllamaUrl(e.target.value)}
-                                placeholder="http://localhost:11434"
-                                required
+                                value={settings.ollama_base_url || ''}
+                                onChange={(e) => setSettings({ ...settings, ollama_base_url: e.target.value })}
+                                placeholder="http://localhost:11434/api/chat"
                             />
                             <p className="help-text">
-                                The URL where your Ollama instance is running.
+                                URL for your local Ollama instance. Ensure Ollama is running with <code>OLLAMA_ORIGINS="*"</code>.
+                            </p>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="openrouter-key">OpenRouter API Key</label>
+                            <input
+                                id="openrouter-key"
+                                type="password"
+                                value={settings.openrouter_api_key || ''}
+                                onChange={(e) => setSettings({ ...settings, openrouter_api_key: e.target.value })}
+                                placeholder="sk-or-..."
+                            />
+                            <p className="help-text">
+                                Optional. Override the default API key for OpenRouter models.
                             </p>
                         </div>
                         <div className="dialog-actions">

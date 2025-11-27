@@ -4,9 +4,12 @@ import remarkGfm from 'remark-gfm';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/Avatar';
 import { ScrollArea } from './ui/ScrollArea';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/Tooltip';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import NewConversationDialog from './NewConversationDialog';
+import { api } from '../api';
 import './ChatInterface.css';
 
 export default function ChatInterface({
@@ -14,11 +17,50 @@ export default function ChatInterface({
   onSendMessage,
   isLoading,
   onReRun,
-  onTogglePin
+  onTogglePin,
+  onQuickStart
 }) {
   const [input, setInput] = useState('');
   const [showAllMessages, setShowAllMessages] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Quick Start State
+  const [qsType, setQsType] = useState('standard');
+  const [qsModels, setQsModels] = useState([]);
+  const [qsPersonas, setQsPersonas] = useState([]);
+  const [qsSelectedMembers, setQsSelectedMembers] = useState([]);
+  const [qsChairman, setQsChairman] = useState('');
+  const [qsIsLoadingData, setQsIsLoadingData] = useState(false);
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!conversation) {
+      loadQuickStartData();
+    }
+  }, [conversation]);
+
+  const loadQuickStartData = async () => {
+    setQsIsLoadingData(true);
+    try {
+      const [pData, mData] = await Promise.all([
+        api.listPersonas(),
+        api.listModels()
+      ]);
+      setQsPersonas(pData);
+      setQsModels(mData);
+
+      // Default selection: First 3 models
+      const defaults = mData.slice(0, 3).map(m => m.id);
+      setQsSelectedMembers(defaults);
+      if (defaults.length > 0) {
+        setQsChairman(defaults[0]);
+      }
+    } catch (e) {
+      console.error("Failed to load quick start data", e);
+    } finally {
+      setQsIsLoadingData(false);
+    }
+  };
 
   const handleTogglePin = (messageId) => {
     if (onTogglePin) {
@@ -37,7 +79,13 @@ export default function ChatInterface({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
-      onSendMessage(input);
+      if (!conversation && onQuickStart) {
+        // Quick Start
+        onQuickStart(input, qsType, qsSelectedMembers, qsChairman);
+      } else {
+        // Normal Send
+        onSendMessage(input);
+      }
       setInput('');
     }
   };
@@ -50,12 +98,85 @@ export default function ChatInterface({
     }
   };
 
+  const handleConfigConfirm = (members, chairman, type) => {
+    setQsSelectedMembers(members);
+    setQsChairman(chairman);
+    setQsType(type);
+    setIsConfigDialogOpen(false);
+  };
+
   if (!conversation) {
     return (
-      <div className="chat-interface">
-        <div className="empty-state">
-          <h2>Welcome to LLM Council</h2>
-          <p>Create a new conversation to get started</p>
+      <div className="chat-interface empty-state-container">
+        <div className="empty-state-content">
+          <div className="welcome-header">
+            <Avatar className="welcome-avatar">
+              <AvatarFallback>LC</AvatarFallback>
+            </Avatar>
+            <h2>Welcome to LLM Council</h2>
+          </div>
+
+          <form className="quick-start-form" onSubmit={handleSubmit}>
+            <textarea
+              className="quick-input"
+              placeholder="Ask anything to start a new council..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={1}
+            />
+
+            <div className="quick-actions">
+              <div className="quick-config">
+                <Select value={qsType} onValueChange={setQsType}>
+                  <SelectTrigger className="quick-select">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard Council</SelectItem>
+                    <SelectItem value="agentic">Agentic Council</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="members-badge clickable"
+                        onClick={() => setIsConfigDialogOpen(true)}
+                      >
+                        {qsSelectedMembers.length} Members
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Click to configure council members
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <button
+                type="submit"
+                className="quick-send-btn"
+                disabled={!input.trim() || qsIsLoadingData}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </form>
+
+          <NewConversationDialog
+            isOpen={isConfigDialogOpen}
+            onClose={() => setIsConfigDialogOpen(false)}
+            onStart={handleConfigConfirm}
+            confirmText="Update Configuration"
+            initialSelectedMembers={qsSelectedMembers}
+            initialSelectedChairman={qsChairman}
+            initialConversationType={qsType}
+          />
         </div>
       </div>
     );

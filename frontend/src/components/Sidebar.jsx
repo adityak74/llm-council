@@ -12,7 +12,8 @@ export default function Sidebar({
   onNewConversation,
   onManagePersonas,
   onDeleteConversation,
-  onOpenSettings
+  onOpenSettings,
+  onToggleSidebar
 }) {
   const { theme, toggleTheme } = useTheme();
 
@@ -22,7 +23,15 @@ export default function Sidebar({
     <TooltipProvider>
       <div className="sidebar">
         <div className="sidebar-header">
-          <h1>LLM Council</h1>
+          <div className="header-top">
+            <button className="collapse-btn" onClick={onToggleSidebar} title="Close sidebar">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+            </button>
+            <h1>LLM Council</h1>
+          </div>
           <div className="sidebar-actions">
             <Tooltip>
               <TooltipTrigger asChild>

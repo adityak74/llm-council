@@ -447,12 +447,24 @@ async def run_agentic_council(
 
     while round_num <= max_rounds and len(current_members) > 0:
         try:
-            # 1. Run standard council round
-            stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-                current_query,
-                current_members,
-                chairman_member
-            )
+            # 1. Run standard council round with granular updates
+            
+            # Stage 1: Collect responses
+            yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
+            stage1_results = await stage1_collect_responses(current_query, current_members)
+            yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
+
+            # Stage 2: Collect rankings
+            yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
+            stage2_results, label_to_model = await stage2_collect_rankings(current_query, stage1_results, current_members)
+            aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
+            metadata = {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}
+            yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': metadata})}\n\n"
+
+            # Stage 3: Synthesize final answer
+            yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
+            stage3_result = await stage3_synthesize_final(current_query, stage1_results, stage2_results, chairman_member)
+            yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Save message to storage
             storage.add_assistant_message(

@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--bg-dialog-overlay);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -12,35 +12,35 @@
 }
 
 .settings-modal {
-    background-color: #1e293b;
+    background-color: var(--bg-dialog);
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 1px solid #334155;
-    color: #f8fafc;
+    box-shadow: 0 25px 50px -12px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-dialog);
 }
 
 .help-text {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin-top: 4px;
 }
 
 .save-btn {
     padding: 10px 24px;
-    background-color: #3b82f6;
+    background-color: var(--primary-color);
     border: none;
-    color: white;
+    color: var(--text-inverse);
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
 }
 
 .save-btn:hover {
-    background-color: #2563eb;
+    background-color: var(--primary-hover);
 }
 
 .save-btn:disabled {

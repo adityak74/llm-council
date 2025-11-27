@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--bg-dialog-overlay);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -12,16 +12,16 @@
 }
 
 .new-chat-modal {
-    background-color: #1e293b;
+    background-color: var(--bg-dialog);
     border-radius: 12px;
     width: 90%;
     max-width: 800px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 1px solid #334155;
-    color: #f8fafc;
+    box-shadow: 0 25px 50px -12px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-dialog);
 }
 
 .modal-content-scroll {
@@ -36,11 +36,11 @@
 
 .section h3 {
     margin: 0 0 4px 0;
-    color: #f8fafc;
+    color: var(--text-dialog);
 }
 
 .subtitle {
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin: 0 0 16px 0;
     font-size: 0.9rem;
 }
@@ -52,7 +52,7 @@
 }
 
 .option-card {
-    background-color: #334155;
+    background-color: var(--bg-input);
     border: 2px solid transparent;
     border-radius: 8px;
     padding: 12px;
@@ -61,12 +61,12 @@
 }
 
 .option-card:hover {
-    background-color: #475569;
+    background-color: var(--bg-hover);
 }
 
 .option-card.selected {
-    border-color: #3b82f6;
-    background-color: #1e3a8a;
+    border-color: var(--primary-color);
+    background-color: var(--bg-active);
 }
 
 .option-header {
@@ -78,12 +78,12 @@
 
 .option-name {
     font-weight: 600;
-    color: #f8fafc;
+    color: var(--text-dialog);
 }
 
 .option-sub {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
 }
 
 .tag {
@@ -95,23 +95,23 @@
 }
 
 .tag.persona {
-    background-color: #8b5cf6;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
 }
 
 .chairman-select {
     width: 100%;
     padding: 12px;
-    background-color: #334155;
-    border: 1px solid #475569;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-input);
     border-radius: 6px;
-    color: #f8fafc;
+    color: var(--text-dialog);
     font-size: 1rem;
 }
 
 .modal-footer {
     padding: 20px;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -120,28 +120,28 @@
 .cancel-btn {
     padding: 10px 20px;
     background-color: transparent;
-    border: 1px solid #475569;
-    color: #cbd5e1;
+    border: 1px solid var(--border-input);
+    color: var(--text-secondary);
     border-radius: 6px;
     cursor: pointer;
 }
 
 .cancel-btn:hover {
-    background-color: #334155;
+    background-color: var(--bg-hover);
 }
 
 .start-btn {
     padding: 10px 24px;
-    background-color: #3b82f6;
+    background-color: var(--primary-color);
     border: none;
-    color: white;
+    color: var(--text-inverse);
     border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
 }
 
 .start-btn:hover {
-    background-color: #2563eb;
+    background-color: var(--primary-hover);
 }
 
 .start-btn:disabled {

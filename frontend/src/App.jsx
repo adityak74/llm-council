@@ -4,6 +4,7 @@ import ChatInterface from './components/ChatInterface';
 import PersonaManager from './components/PersonaManager';
 import NewConversationDialog from './components/NewConversationDialog';
 import SettingsDialog from './components/SettingsDialog';
+import { ThemeProvider } from './ThemeContext';
 import { api } from './api';
 import './App.css';
 
@@ -14,9 +15,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Dialog states
-  const [showPersonaManager, setShowPersonaManager] = useState(false);
-  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [isPersonaManagerOpen, setIsPersonaManagerOpen] = useState(false);
+  const [isNewConversationDialogOpen, setIsNewConversationDialogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -50,7 +51,7 @@ function App() {
 
   const handleStartNewConversation = async (councilMembers, chairmanId, conversationType) => {
     try {
-      setShowNewChatDialog(false);
+      setIsNewConversationDialogOpen(false);
       const newConv = await api.createConversation(councilMembers, chairmanId, conversationType);
       setConversations([
         { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
@@ -371,38 +372,45 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <Sidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={() => setShowNewChatDialog(true)}
-        onManagePersonas={() => setShowPersonaManager(true)}
-        onDeleteConversation={handleDeleteConversation}
-        onOpenSettings={() => setShowSettings(true)}
-      />
-      <ChatInterface
-        conversation={currentConversation}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
-        onReRun={handleReRun}
-      />
-
-      {showPersonaManager && (
-        <PersonaManager onClose={() => setShowPersonaManager(false)} />
-      )}
-
-      {showNewChatDialog && (
-        <NewConversationDialog
-          onClose={() => setShowNewChatDialog(false)}
-          onStart={handleStartNewConversation}
+    <ThemeProvider>
+      <div className="app">
+        <Sidebar
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={() => setIsNewConversationDialogOpen(true)}
+          onDeleteConversation={handleDeleteConversation}
+          onManagePersonas={() => setIsPersonaManagerOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
-      )}
+        <ChatInterface
+          conversation={currentConversation}
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          onReRun={handleReRun}
+        />
 
-      {showSettings && (
-        <SettingsDialog onClose={() => setShowSettings(false)} />
-      )}
-    </div>
+        {isPersonaManagerOpen && (
+          <PersonaManager onClose={() => setIsPersonaManagerOpen(false)} />
+        )}
+
+        {isNewConversationDialogOpen && (
+          <NewConversationDialog
+            isOpen={isNewConversationDialogOpen}
+            onClose={() => setIsNewConversationDialogOpen(false)}
+            onStart={handleStartNewConversation}
+            personas={personas} // Pass personas if needed, or fetch inside
+          />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsDialog
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+          />
+        )}
+      </div>
+    </ThemeProvider>
   );
 }
 

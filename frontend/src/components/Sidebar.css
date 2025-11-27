@@ -1,7 +1,7 @@
 .sidebar {
   width: 260px;
-  background: #f8f8f8;
-  border-right: 1px solid #e0e0e0;
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -9,13 +9,13 @@
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-header h1 {
   font-size: 18px;
   margin: 0 0 12px 0;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .sidebar-actions {
@@ -38,32 +38,50 @@
 }
 
 .new-chat-btn {
-  background: #4a90e2;
-  color: #fff;
+  background: var(--primary-color);
+  color: var(--text-inverse);
 }
 
 .new-chat-btn:hover {
-  background: #357abd;
+  background: var(--primary-hover);
 }
 
 .manage-personas-btn {
-  background: #e2e8f0;
-  color: #475569;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .manage-personas-btn:hover {
-  background: #cbd5e1;
+  background: var(--border-color);
 }
 
 .settings-btn {
   background: transparent;
-  color: #94a3b8;
-  border: 1px solid #334155;
+  color: var(--text-tertiary);
+  border: 1px solid var(--text-secondary);
 }
 
 .settings-btn:hover {
-  background: #334155;
-  color: #f8fafc;
+  background: var(--text-secondary);
+  color: var(--bg-primary);
+}
+
+.theme-toggle-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid var(--text-secondary);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--text-secondary);
+  color: var(--bg-primary);
 }
 
 .conversation-list {
@@ -75,7 +93,7 @@
 .no-conversations {
   padding: 16px;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 14px;
 }
 
@@ -96,16 +114,16 @@
 }
 
 .conversation-item:hover {
-  background: #f0f0f0;
+  background: var(--bg-hover);
 }
 
 .conversation-item.active {
-  background: #e8f0fe;
-  border: 1px solid #4a90e2;
+  background: var(--bg-active);
+  border: 1px solid var(--primary-color);
 }
 
 .conversation-title {
-  color: #333;
+  color: var(--text-primary);
   font-size: 14px;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -114,14 +132,14 @@
 }
 
 .conversation-meta {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
 .delete-conv-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 18px;
   cursor: pointer;
   padding: 4px 8px;
@@ -135,6 +153,6 @@
 }
 
 .delete-conv-btn:hover {
-  background-color: #fee2e2;
-  color: #ef4444;
+  background-color: var(--error-bg);
+  color: var(--error-text);
 }

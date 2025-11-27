@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from '../ThemeContext';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -10,6 +11,8 @@ export default function Sidebar({
   onDeleteConversation,
   onOpenSettings
 }) {
+  const { theme, toggleTheme } = useTheme();
+
   const handleDelete = (e, id) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this conversation?')) {
@@ -30,6 +33,9 @@ export default function Sidebar({
           </button>
           <button className="settings-btn" onClick={onOpenSettings}>
             Settings
+          </button>
+          <button className="theme-toggle-btn" onClick={toggleTheme}>
+            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
           </button>
         </div>
       </div>

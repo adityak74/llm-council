@@ -14,6 +14,28 @@ In a bit more detail, here is what happens when you submit a query:
 
 This project was 99% vibe coded as a fun Saturday hack because I wanted to explore and evaluate a number of LLMs side by side in the process of [reading books together with LLMs](https://x.com/karpathy/status/1990577951671509438). It's nice and useful to see multiple responses side by side, and also the cross-opinions of all LLMs on each other's outputs. I'm not going to support it in any way, it's provided here as is for other people's inspiration and I don't intend to improve it. Code is ephemeral now and libraries are over, ask your LLM to change it in whatever way you like.
 
+## Features
+
+### 🤖 Local & Remote Models
+- **Ollama Support**: Run models locally using Ollama.
+- **Remote Ollama**: Connect to remote Ollama instances via settings.
+- **OpenRouter**: Access a wide range of commercial models.
+
+### 🧠 Agentic Council
+- **Iterative Process**: A multi-round conversation where the council refines its answer.
+- **Member Eviction**: The lowest-performing member is voted out after each round.
+- **Chairman Follow-ups**: The Chairman generates insightful follow-up questions to dig deeper.
+
+### ⚙️ Advanced Configuration
+- **Persona Management**: Create custom personas with specific system prompts.
+- **Model Selection**: Filter models by provider (OpenAI, Anthropic, Google, Ollama, etc.).
+- **Concurrency Control**: Limits concurrent requests to local Ollama instances to prevent overload.
+
+### 💅 Enhanced UX
+- **Markdown Support**: Full rendering of tables, code blocks, and formatting.
+- **Re-run Capability**: Easily re-run the council process for any question.
+- **Conversation Management**: Delete old conversations and manage history.
+
 ## Setup
 
 ### 1. Install Dependencies
@@ -42,20 +64,19 @@ OPENROUTER_API_KEY=sk-or-v1-...
 
 Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
 
-### 3. Configure Models (Optional)
+### 3. Configure Ollama (Optional)
 
-Edit `backend/config.py` to customize the council:
+If you want to use local models:
+1. Install [Ollama](https://ollama.com/).
+2. Pull some models: `ollama pull llama3`
+3. The app connects to `http://localhost:11434` by default. You can change this in the Settings dialog in the app.
 
-```python
-COUNCIL_MODELS = [
-    "openai/gpt-5.1",
-    "google/gemini-3-pro-preview",
-    "anthropic/claude-sonnet-4.5",
-    "x-ai/grok-4",
-]
+### 4. Configure Personas
 
-CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
-```
+You can configure personas and models directly in the UI. Click the "Personas" button in the sidebar to:
+- Add new personas
+- Select models from OpenRouter or Ollama
+- Define custom system prompts
 
 ## Running the Application
 

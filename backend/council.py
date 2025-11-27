@@ -446,58 +446,72 @@ async def run_agentic_council(
     max_rounds = 10
 
     while round_num <= max_rounds and len(current_members) > 0:
-        # 1. Run standard council round
-        stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-            current_query,
-            current_members,
-            chairman_member
-        )
+        try:
+            # 1. Run standard council round
+            stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
+                current_query,
+                current_members,
+                chairman_member
+            )
 
-        # Save message to storage
-        storage.add_assistant_message(
-            conversation_id,
-            stage1_results,
-            stage2_results,
-            stage3_result,
-            metadata
-        )
+            # Save message to storage
+            storage.add_assistant_message(
+                conversation_id,
+                stage1_results,
+                stage2_results,
+                stage3_result,
+                metadata
+            )
 
-        # Yield the message to the client
-        message_data = {
-            "role": "assistant",
-            "stage1": stage1_results,
-            "stage2": stage2_results,
-            "stage3": stage3_result,
-            "metadata": metadata,
-            "round": round_num
-        }
-        yield f"data: {json.dumps(message_data)}\n\n"
+            # Yield the message to the client
+            message_data = {
+                "role": "assistant",
+                "stage1": stage1_results,
+                "stage2": stage2_results,
+                "stage3": stage3_result,
+                "metadata": metadata,
+                "round": round_num
+            }
+            yield f"data: {json.dumps(message_data)}\n\n"
 
-        # Check termination conditions
-        if round_num >= max_rounds or len(current_members) <= 1:
-            break
+            # Check termination conditions
+            if round_num >= max_rounds or len(current_members) <= 1:
+                break
 
-        # 2. Evict lowest ranked member
-        # Find member with worst average rank (highest number)
-        aggregate_rankings = metadata.get("aggregate_rankings", [])
-        if aggregate_rankings:
-            # Sort by average_rank descending (worst first)
-            sorted_rankings = sorted(aggregate_rankings, key=lambda x: x['average_rank'], reverse=True)
-            worst_member_id = sorted_rankings[0]['model']
+            # 2. Evict lowest ranked member
+            # Find member with worst average rank (highest number)
+            aggregate_rankings = metadata.get("aggregate_rankings", [])
+            if aggregate_rankings:
+                # Sort by average_rank descending (worst first)
+                sorted_rankings = sorted(aggregate_rankings, key=lambda x: x['average_rank'], reverse=True)
+                worst_member_id = sorted_rankings[0]['model']
+                
+                # Remove from current members
+                current_members = [m for m in current_members if m['model_id'] != worst_member_id]
+
+            # 3. Generate follow-up question
+            followup_query = await generate_followup_question(
+                current_query,
+                stage3_result['response'],
+                chairman_member
+            )
             
-            # Remove from current members
-            current_members = [m for m in current_members if m['model_id'] != worst_member_id]
+            current_query = followup_query
+            
+            # Add the follow-up question as a user message
+            storage.add_user_message(conversation_id, f"Chairman's Follow-up: {followup_query}")
+            
+            # Yield the user message so UI updates
+            user_msg_data = {
+                "role": "user",
+                "content": f"Chairman's Follow-up: {followup_query}"
+            }
+            yield f"data: {json.dumps(user_msg_data)}\n\n"
 
-        # 3. Generate follow-up question
-        followup_query = await generate_followup_question(
-            current_query,
-            stage3_result['response'],
-            chairman_member
-        )
-        
-        current_query = followup_query
-        
-        # Add the follow-up question as a user message
+            round_num += 1
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            break
         storage.add_user_message(conversation_id, f"Chairman's Follow-up: {followup_query}")
         
         # Yield the user message so UI updates

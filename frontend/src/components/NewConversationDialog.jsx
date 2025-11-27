@@ -10,6 +10,7 @@ function NewConversationDialog({ onClose, onStart }) {
     // Selection state
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [selectedChairman, setSelectedChairman] = useState('');
+    const [conversationType, setConversationType] = useState('standard');
 
     useEffect(() => {
         loadData();
@@ -69,7 +70,7 @@ function NewConversationDialog({ onClose, onStart }) {
             alert('Please select a Chairman.');
             return;
         }
-        onStart(selectedMembers, selectedChairman);
+        onStart(selectedMembers, selectedChairman, conversationType);
     };
 
     // Combine models and personas for display
@@ -125,8 +126,32 @@ function NewConversationDialog({ onClose, onStart }) {
                                             {opt.label} ({opt.type === 'persona' ? 'Persona' : 'Model'})
                                         </option>
                                     ))}
-                                    {/* Allow selecting a chairman even if not in the council? Maybe better to restrict to members for consistency */}
                                 </select>
+                            </div>
+
+                            <div className="section">
+                                <h3>3. Conversation Type</h3>
+                                <div className="options-grid">
+                                    <div
+                                        className={`option-card ${conversationType === 'standard' ? 'selected' : ''}`}
+                                        onClick={() => setConversationType('standard')}
+                                    >
+                                        <div className="option-header">
+                                            <span className="option-name">Standard Council</span>
+                                        </div>
+                                        <span className="option-sub">Single round of debate and synthesis.</span>
+                                    </div>
+                                    <div
+                                        className={`option-card ${conversationType === 'agentic' ? 'selected' : ''}`}
+                                        onClick={() => setConversationType('agentic')}
+                                    >
+                                        <div className="option-header">
+                                            <span className="option-name">Agentic Council</span>
+                                            <span className="tag persona">New</span>
+                                        </div>
+                                        <span className="option-sub">Multi-round debate with eviction and follow-ups.</span>
+                                    </div>
+                                </div>
                             </div>
                         </>
                     )}

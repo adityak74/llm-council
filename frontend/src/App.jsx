@@ -48,10 +48,10 @@ function App() {
     }
   };
 
-  const handleStartNewConversation = async (councilMembers, chairmanId) => {
+  const handleStartNewConversation = async (councilMembers, chairmanId, conversationType) => {
     try {
       setShowNewChatDialog(false);
-      const newConv = await api.createConversation(councilMembers, chairmanId);
+      const newConv = await api.createConversation(councilMembers, chairmanId, conversationType);
       setConversations([
         { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
         ...conversations,
@@ -123,7 +123,10 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.loading.stage1 = true;
+          // Ensure we are updating an assistant message
+          if (lastMsg.role === 'assistant') {
+            lastMsg.loading.stage1 = true;
+          }
           return { ...prev, messages };
         });
         break;
@@ -132,8 +135,10 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.stage1 = event.data;
-          lastMsg.loading.stage1 = false;
+          if (lastMsg.role === 'assistant') {
+            lastMsg.stage1 = event.data;
+            lastMsg.loading.stage1 = false;
+          }
           return { ...prev, messages };
         });
         break;
@@ -142,7 +147,9 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.loading.stage2 = true;
+          if (lastMsg.role === 'assistant') {
+            lastMsg.loading.stage2 = true;
+          }
           return { ...prev, messages };
         });
         break;
@@ -151,9 +158,11 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.stage2 = event.data;
-          lastMsg.metadata = event.metadata;
-          lastMsg.loading.stage2 = false;
+          if (lastMsg.role === 'assistant') {
+            lastMsg.stage2 = event.data;
+            lastMsg.metadata = event.metadata;
+            lastMsg.loading.stage2 = false;
+          }
           return { ...prev, messages };
         });
         break;
@@ -162,7 +171,9 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.loading.stage3 = true;
+          if (lastMsg.role === 'assistant') {
+            lastMsg.loading.stage3 = true;
+          }
           return { ...prev, messages };
         });
         break;
@@ -171,8 +182,10 @@ function App() {
         setCurrentConversation((prev) => {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
-          lastMsg.stage3 = event.data;
-          lastMsg.loading.stage3 = false;
+          if (lastMsg.role === 'assistant') {
+            lastMsg.stage3 = event.data;
+            lastMsg.loading.stage3 = false;
+          }
           return { ...prev, messages };
         });
         break;
@@ -192,7 +205,101 @@ function App() {
         break;
 
       default:
-        console.log('Unknown event type:', eventType);
+        // Handle new message types for Agentic Council
+        // If we receive a full message object, append it
+        if (event.role) {
+          setCurrentConversation((prev) => {
+            // Check if this message already exists (by some ID or just append?)
+            // Since we don't have IDs for messages in the stream event usually, we just append.
+            // But wait, for the FIRST message of the stream, we already optimistically added it.
+            // For agentic council, subsequent messages (follow-ups and new rounds) need to be appended.
+
+            // Logic:
+            // 1. If it's a user message (follow-up), append it.
+            // 2. If it's an assistant message (new round), append it.
+            // 3. BUT, we need to handle the optimistic assistant message we added at start.
+
+            // Actually, the backend for Agentic Council yields full message objects at the end of each round.
+            // But we also have the granular stage events.
+            // The stage events update the *last* message.
+            // So when a new round starts, we need to append a new empty assistant message?
+            // Or does the backend yield a "new_round" event?
+
+            // Let's look at backend logic:
+            // It yields "data: {json.dumps(message_data)}" where message_data has role, stage1, etc.
+            // This is a COMPLETE message.
+
+            // If we receive a complete message, we should probably replace the last message if it matches, or append if it's new.
+            // But we are also receiving granular updates.
+
+            // Let's adjust the strategy:
+            // For Agentic Council, the backend yields granular events for the current round.
+            // Then it yields the full message.
+            // Then it yields a user message (follow-up).
+            // Then it starts yielding granular events for the NEXT round.
+
+            // So when we get a user message (follow-up), we append it.
+            // Then we need to prepare for the next assistant message.
+
+            const messages = [...prev.messages];
+            const lastMsg = messages[messages.length - 1];
+
+            if (event.role === 'user') {
+              // This is a follow-up question
+              return {
+                ...prev,
+                messages: [...messages, event]
+              };
+            } else if (event.role === 'assistant') {
+              // This is a completed assistant message.
+              // We might have already updated it via granular events.
+              // So we can just ensure it's up to date.
+              // OR, if this is a NEW round (implied because we just got a user message), we append it.
+
+              // If the last message is a user message, we need to add a new assistant message.
+              if (lastMsg.role === 'user') {
+                return {
+                  ...prev,
+                  messages: [...messages, {
+                    ...event,
+                    loading: { stage1: false, stage2: false, stage3: false }
+                  }]
+                };
+              } else {
+                // Update the existing assistant message
+                messages[messages.length - 1] = {
+                  ...messages[messages.length - 1],
+                  ...event,
+                  loading: { stage1: false, stage2: false, stage3: false }
+                };
+                return { ...prev, messages };
+              }
+            }
+            return prev;
+          });
+
+          // If we just added a user message, we should also optimistically add the NEXT assistant message container
+          // so granular events have something to update.
+          if (event.role === 'user') {
+            setCurrentConversation((prev) => ({
+              ...prev,
+              messages: [...prev.messages, {
+                role: 'assistant',
+                stage1: null,
+                stage2: null,
+                stage3: null,
+                metadata: null,
+                loading: {
+                  stage1: false,
+                  stage2: false,
+                  stage3: false,
+                },
+              }]
+            }));
+          }
+        } else {
+          console.log('Unknown event type:', eventType);
+        }
     }
   };
 

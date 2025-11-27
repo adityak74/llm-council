@@ -392,3 +392,119 @@ async def run_full_council(
     }
 
     return stage1_results, stage2_results, stage3_result, metadata
+
+
+async def generate_followup_question(
+    previous_query: str,
+    previous_answer: str,
+    chairman_member: Dict[str, Any]
+) -> str:
+    """Generate a follow-up question based on the previous answer."""
+    prompt = f"""You are the Chairman of an LLM Council.
+    
+Previous Question: {previous_query}
+Previous Answer: {previous_answer}
+
+Based on this answer, generate a single, insightful follow-up question to dig deeper into the topic or address unresolved aspects. 
+The question should be directed at the remaining council members.
+Do not include any preamble, just the question."""
+
+    messages = [{"role": "user", "content": prompt}]
+    
+    response = await query_model(
+        chairman_member['model_id'],
+        messages,
+        system_prompt=chairman_member.get('system_prompt')
+    )
+    
+    if response:
+        return response['content']
+    return "What are your further thoughts on this?"
+
+
+async def run_agentic_council(
+    user_query: str,
+    initial_council_members: List[Dict[str, Any]],
+    chairman_member: Dict[str, Any],
+    conversation_id: str
+):
+    """
+    Run the Agentic Council process with multiple rounds and eviction.
+    Yields SSE events for each message.
+    """
+    from . import storage
+    import json
+    
+    current_members = list(initial_council_members)
+    current_query = user_query
+    round_num = 1
+    max_rounds = 10
+
+    current_members = list(initial_council_members)
+    current_query = user_query
+    round_num = 1
+    max_rounds = 10
+
+    while round_num <= max_rounds and len(current_members) > 0:
+        # 1. Run standard council round
+        stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
+            current_query,
+            current_members,
+            chairman_member
+        )
+
+        # Save message to storage
+        storage.add_assistant_message(
+            conversation_id,
+            stage1_results,
+            stage2_results,
+            stage3_result,
+            metadata
+        )
+
+        # Yield the message to the client
+        message_data = {
+            "role": "assistant",
+            "stage1": stage1_results,
+            "stage2": stage2_results,
+            "stage3": stage3_result,
+            "metadata": metadata,
+            "round": round_num
+        }
+        yield f"data: {json.dumps(message_data)}\n\n"
+
+        # Check termination conditions
+        if round_num >= max_rounds or len(current_members) <= 1:
+            break
+
+        # 2. Evict lowest ranked member
+        # Find member with worst average rank (highest number)
+        aggregate_rankings = metadata.get("aggregate_rankings", [])
+        if aggregate_rankings:
+            # Sort by average_rank descending (worst first)
+            sorted_rankings = sorted(aggregate_rankings, key=lambda x: x['average_rank'], reverse=True)
+            worst_member_id = sorted_rankings[0]['model']
+            
+            # Remove from current members
+            current_members = [m for m in current_members if m['model_id'] != worst_member_id]
+
+        # 3. Generate follow-up question
+        followup_query = await generate_followup_question(
+            current_query,
+            stage3_result['response'],
+            chairman_member
+        )
+        
+        current_query = followup_query
+        
+        # Add the follow-up question as a user message
+        storage.add_user_message(conversation_id, f"Chairman's Follow-up: {followup_query}")
+        
+        # Yield the user message so UI updates
+        user_msg_data = {
+            "role": "user",
+            "content": f"Chairman's Follow-up: {followup_query}"
+        }
+        yield f"data: {json.dumps(user_msg_data)}\n\n"
+
+        round_num += 1

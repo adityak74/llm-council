@@ -29,6 +29,7 @@ class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
     council_members: Optional[List[str]] = None  # List of model IDs or Persona IDs
     chairman_id: Optional[str] = None  # Model ID or Persona ID
+    conversation_type: str = "standard"  # "standard" or "agentic"
 
 
 class CreatePersonaRequest(BaseModel):
@@ -49,6 +50,7 @@ class ConversationMetadata(BaseModel):
     created_at: str
     title: str
     message_count: int
+    conversation_type: str = "standard"
 
 
 class Conversation(BaseModel):
@@ -58,6 +60,7 @@ class Conversation(BaseModel):
     title: str
     messages: List[Dict[str, Any]]
     council_config: Optional[Dict[str, Any]] = None  # Store the council configuration used
+    conversation_type: str = "standard"
 
 
 @app.get("/")
@@ -244,7 +247,7 @@ async def create_conversation(request: CreateConversationRequest):
         "chairman": final_chairman
     }
     
-    conversation = storage.create_conversation(conversation_id)
+    conversation = storage.create_conversation(conversation_id, request.conversation_type)
     
     # Store config in conversation (need to update storage.py or just inject it here if storage supports extra fields)
     # storage.create_conversation just creates a dict. We can add to it.
@@ -308,7 +311,8 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         conversation_id,
         stage1_results,
         stage2_results,
-        stage3_result
+        stage3_result,
+        metadata
     )
 
     # Return the complete response with metadata
@@ -355,38 +359,46 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 council_members = council_config["members"]
                 chairman = council_config["chairman"]
 
-            # Stage 1: Collect responses
-            yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content, council_members)
-            yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
+            # Run the council process
+            if conversation.get("conversation_type") == "agentic":
+                from .council import run_agentic_council
+                async for event in run_agentic_council(request.content, council_members, chairman, conversation_id):
+                    yield event
+            else:
+                # Stage 1: Collect responses
+                yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
+                stage1_results = await stage1_collect_responses(request.content, council_members)
+                yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
-            # Stage 2: Collect rankings
-            yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_members)
-            aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
-            yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
+                # Stage 2: Collect rankings
+                yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
+                stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, council_members)
+                aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
+                metadata = {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}
+                yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': metadata})}\n\n"
 
-            # Stage 3: Synthesize final answer
-            yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman)
-            yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
+                # Stage 3: Synthesize final answer
+                yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
+                stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman)
+                yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
+
+                # Add assistant message with all stages
+                storage.add_assistant_message(
+                    conversation_id,
+                    stage1_results,
+                    stage2_results,
+                    stage3_result,
+                    metadata
+                )
+
+                # Send completion event
+                yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
             # Wait for title generation if it was started
             if title_task:
                 title = await title_task
                 storage.update_conversation_title(conversation_id, title)
                 yield f"data: {json.dumps({'type': 'title_complete', 'data': {'title': title}})}\n\n"
-
-            # Save complete assistant message
-            storage.add_assistant_message(
-                conversation_id,
-                stage1_results,
-                stage2_results,
-                stage3_result
-            )
-
-            # Send completion event
-            yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
         except Exception as e:
             # Send error event

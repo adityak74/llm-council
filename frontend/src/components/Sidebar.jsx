@@ -13,7 +13,9 @@ export default function Sidebar({
   onManagePersonas,
   onDeleteConversation,
   onOpenSettings,
-  onToggleSidebar
+
+  onToggleSidebar,
+  isOpen = true
 }) {
   const { theme, toggleTheme } = useTheme();
 
@@ -21,7 +23,7 @@ export default function Sidebar({
 
   return (
     <TooltipProvider>
-      <div className="sidebar">
+      <div className={`sidebar ${!isOpen ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="header-top">
             <button className="collapse-btn" onClick={onToggleSidebar} title="Close sidebar">

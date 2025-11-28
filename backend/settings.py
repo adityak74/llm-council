@@ -8,20 +8,22 @@ SETTINGS_FILE = "data/settings.json"
 
 def get_settings() -> Dict[str, Any]:
     """Get current settings."""
+    defaults = {
+        "ollama_base_url": DEFAULT_OLLAMA_URL,
+        "openrouter_api_key": "",
+        "user_api_key": ""
+    }
+
     if not os.path.exists(SETTINGS_FILE):
-        return {
-            "ollama_base_url": DEFAULT_OLLAMA_URL,
-            "openrouter_api_key": ""
-        }
+        return defaults
     
     try:
         with open(SETTINGS_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            # Merge with defaults to ensure all keys exist
+            return {**defaults, **data}
     except Exception:
-        return {
-            "ollama_base_url": DEFAULT_OLLAMA_URL,
-            "openrouter_api_key": ""
-        }
+        return defaults
 
 def update_settings(new_settings: Dict[str, Any]) -> Dict[str, Any]:
     """Update settings."""

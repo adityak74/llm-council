@@ -14,9 +14,7 @@
     sans-serif;
 }
 
-.app-container.sidebar-closed .sidebar {
-  display: none;
-}
+
 
 .app-container.sidebar-closed .chat-interface {
   width: 100vw;

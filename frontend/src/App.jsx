@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import PersonaManager from './components/PersonaManager';
 import NewConversationDialog from './components/NewConversationDialog';
+import SettingsPage from './components/SettingsPage';
 import SettingsDialog from './components/SettingsDialog';
 import { ThemeProvider } from './ThemeContext';
 import { ToastProvider, ToastViewport } from './components/ui/Toast';
@@ -382,10 +383,17 @@ function App() {
             currentConversationId={currentConversationId}
             onSelectConversation={handleSelectConversation}
             onNewConversation={() => setIsNewConversationDialogOpen(true)}
-            onManagePersonas={() => setIsPersonaManagerOpen(true)}
+            onManagePersonas={() => {
+              setIsPersonaManagerOpen(true);
+              setIsSettingsOpen(true);
+            }}
             onDeleteConversation={handleDeleteConversation}
-            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSettings={() => {
+              setIsPersonaManagerOpen(false);
+              setIsSettingsOpen(true);
+            }}
             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            isOpen={isSidebarOpen}
           />
 
           {!isSidebarOpen && (
@@ -401,7 +409,7 @@ function App() {
             </button>
           )}
 
-          {isPersonaManagerOpen ? (
+          {false ? (
             <PersonaManager onClose={() => setIsPersonaManagerOpen(false)} />
           ) : (
             <ChatInterface
@@ -463,10 +471,13 @@ function App() {
             onStart={handleStartNewConversation}
           />
 
-          <SettingsDialog
+          <SettingsPage
             isOpen={isSettingsOpen}
             onClose={() => setIsSettingsOpen(false)}
+            initialTab={isPersonaManagerOpen ? 'personas' : 'general'}
           />
+
+          <ToastViewport />
 
           <ToastViewport />
         </div>

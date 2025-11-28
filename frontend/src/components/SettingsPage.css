@@ -1,0 +1,75 @@
+.settings-page-dialog {
+    max-width: 900px;
+    width: 90vw;
+    height: 80vh;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-page-container {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+
+.settings-sidebar {
+    width: 200px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-sidebar h2 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.settings-sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item {
+    text-align: left;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.settings-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    background: var(--bg-primary);
+}
+
+/* Override embedded component styles */
+.settings-content .modal-content {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+    max-width: none;
+}

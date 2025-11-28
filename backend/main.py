@@ -122,6 +122,7 @@ async def list_models():
 class UpdateSettingsRequest(BaseModel):
     ollama_base_url: str
     openrouter_api_key: Optional[str] = ""
+    user_api_key: Optional[str] = ""
 
 @app.get("/api/settings")
 async def get_settings():

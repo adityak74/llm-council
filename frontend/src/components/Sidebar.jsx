@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../ThemeContext';
 import { Switch } from './ui/Switch';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from './ui/AlertDialog';
@@ -18,12 +19,51 @@ export default function Sidebar({
   isOpen = true
 }) {
   const { theme, toggleTheme } = useTheme();
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    return saved ? parseInt(saved, 10) : 260;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef(null);
 
+  useEffect(() => {
+    localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+  }, [sidebarWidth]);
 
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e) => {
+      const newWidth = e.clientX;
+      if (newWidth >= 200 && newWidth <= 400) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleResizeStart = () => {
+    setIsResizing(true);
+  };
 
   return (
     <TooltipProvider>
-      <div className={`sidebar ${!isOpen ? 'collapsed' : ''}`}>
+      <div
+        ref={sidebarRef}
+        className={`sidebar ${!isOpen ? 'collapsed' : ''}`}
+        style={{ width: isOpen ? `${sidebarWidth}px` : '0' }}
+      >
         <div className="sidebar-header">
           <div className="header-top">
             <button className="collapse-btn" onClick={onToggleSidebar} title="Close sidebar">
@@ -32,10 +72,10 @@ export default function Sidebar({
                 <line x1="9" y1="3" x2="9" y2="21"></line>
               </svg>
             </button>
-            <h1>LLM Council</h1>
+            <h1>QuorumAI</h1>
           </div>
           <div className="sidebar-logo-container">
-            <img src="/logo.png" alt="LLM Council Logo" className="sidebar-logo" />
+            <img src="/logo.png" alt="QuorumAI Logo" className="sidebar-logo" />
           </div>
           <div className="sidebar-actions">
             <Tooltip>
@@ -65,14 +105,7 @@ export default function Sidebar({
               <TooltipContent>Configure Settings</TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="settings-btn" onClick={onOpenSettings}>
-                  Settings
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Configure Settings</TooltipContent>
-            </Tooltip>
+
           </div>
         </div>
 
@@ -124,6 +157,13 @@ export default function Sidebar({
             ))}
           </div>
         </ScrollArea>
+        {isOpen && (
+          <div
+            className="resize-handle"
+            onMouseDown={handleResizeStart}
+            style={{ cursor: isResizing ? 'col-resize' : 'col-resize' }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

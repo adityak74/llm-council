@@ -196,6 +196,14 @@ function App() {
 
       case 'title_complete':
         loadConversations();
+        // Optimistically update current conversation title
+        setCurrentConversation((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            title: event.data.title
+          };
+        });
         break;
 
       case 'complete':
@@ -307,8 +315,10 @@ function App() {
     }
   };
 
-  const handleSendMessage = async (content) => {
-    if (!currentConversationId) return;
+  // Updated to accept optional conversationId to avoid race conditions with state updates
+  const handleSendMessage = async (content, conversationId = null) => {
+    const targetId = conversationId || currentConversationId;
+    if (!targetId) return;
 
     setIsLoading(true);
     try {
@@ -340,7 +350,7 @@ function App() {
       }));
 
       // Send message with streaming
-      await api.sendMessageStream(currentConversationId, content, handleStreamEvent);
+      await api.sendMessageStream(targetId, content, handleStreamEvent);
     } catch (error) {
       console.error('Failed to send message:', error);
       // Remove optimistic messages on error
@@ -450,7 +460,7 @@ function App() {
                     messages: [] // Start empty, handleSendMessage will add user msg
                   });
 
-                  // 3. Send Message using shared logic
+                  // 3. Send Message using shared logic - Pass the ID explicitly!
                   await handleSendMessage(message, newConv.id);
 
                 } catch (error) {

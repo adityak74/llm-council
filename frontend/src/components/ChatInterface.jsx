@@ -111,9 +111,9 @@ export default function ChatInterface({
         <div className="empty-state-content">
           <div className="welcome-header">
             <div className="welcome-avatar-container">
-              <img src="/logo.png" alt="LLM Council" className="welcome-logo" />
+              <img src="/logo.png" alt="QuorumAI" className="welcome-logo" />
             </div>
-            <h2>Welcome to LLM Council</h2>
+            <h2>Welcome to QuorumAI</h2>
           </div>
 
           <form className="quick-start-form" onSubmit={handleSubmit}>
@@ -190,7 +190,7 @@ export default function ChatInterface({
             {conversation.messages.length === 0 ? (
               <div className="empty-state">
                 <h2>Start a conversation</h2>
-                <p>Ask a question to consult the LLM Council</p>
+                <p>Ask a question to consult QuorumAI</p>
               </div>
             ) : (
               <>
@@ -235,7 +235,7 @@ export default function ChatInterface({
                             <Avatar className="message-avatar assistant">
                               <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
-                            <span className="message-label">LLM Council</span>
+                            <span className="message-label">QuorumAI</span>
                           </div>
                           <button
                             className={`pin-btn ${msg.pinned ? 'active' : ''}`}
@@ -250,7 +250,11 @@ export default function ChatInterface({
                         {msg.loading?.stage1 && (
                           <div className="stage-loading">
                             <div className="spinner"></div>
-                            <span>Running Stage 1: Collecting individual responses...</span>
+                            <span>
+                              {conversation?.council_config?.members
+                                ? `Council Members (${conversation.council_config.members.map(m => m.name).join(', ')}) are researching...`
+                                : "Council Members are researching..."}
+                            </span>
                           </div>
                         )}
                         {msg.stage1 && <Stage1 responses={msg.stage1} />}
@@ -259,7 +263,11 @@ export default function ChatInterface({
                         {msg.loading?.stage2 && (
                           <div className="stage-loading">
                             <div className="spinner"></div>
-                            <span>Running Stage 2: Peer rankings...</span>
+                            <span>
+                              {conversation?.council_config?.members
+                                ? "Council is debating and ranking responses..."
+                                : "Council is ranking responses..."}
+                            </span>
                           </div>
                         )}
                         {msg.stage2 && (
@@ -274,7 +282,11 @@ export default function ChatInterface({
                         {msg.loading?.stage3 && (
                           <div className="stage-loading">
                             <div className="spinner"></div>
-                            <span>Running Stage 3: Final synthesis...</span>
+                            <span>
+                              {conversation?.council_config?.chairman
+                                ? `Chairman (${conversation.council_config.chairman.name}) is synthesizing...`
+                                : "Chairman is synthesizing..."}
+                            </span>
                           </div>
                         )}
                         {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
@@ -288,7 +300,11 @@ export default function ChatInterface({
             {isLoading && (
               <div className="loading-indicator">
                 <div className="spinner"></div>
-                <span>Consulting the council...</span>
+                <span>
+                  {conversation?.messages?.length === 0
+                    ? "Initializing Council Session..."
+                    : "Consulting the council..."}
+                </span>
               </div>
             )}
 

@@ -68,7 +68,7 @@
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background-color: var(--bg-secondary);
+  background-color: transparent;
 }
 
 .persona-list ul {

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# LLM Council - Restart script
+# QuorumAI - Restart script
 
-echo "Restarting LLM Council..."
+echo "Restarting QuorumAI..."
 echo ""
 
 # Function to kill process on port

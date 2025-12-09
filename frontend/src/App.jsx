@@ -46,7 +46,16 @@ function App() {
   const loadConversation = async (id) => {
     try {
       const conv = await api.getConversation(id);
-      setCurrentConversation(conv);
+      setCurrentConversation((prev) => {
+        // Race condition protection:
+        // If the current (optimistic) state has more messages than the fetched (stale) state,
+        // and IDs match, ignore the fetch to prevent wiping out the streaming/optimistic content.
+        if (prev && prev.id === conv.id && prev.messages.length > conv.messages.length) {
+          console.warn('[loadConversation] Blocking stale fetch update - keeping optimistic state with messages:', prev.messages.length);
+          return prev;
+        }
+        return conv;
+      });
     } catch (error) {
       console.error('Failed to load conversation:', error);
     }
@@ -245,8 +254,14 @@ function App() {
         // Use conversationId from event if available, otherwise fall back to currentConversationId
         const convId = event.conversationId || currentConversationId;
         if (convId) {
-          console.log('[Complete Event] Calling loadConversation for:', convId);
-          loadConversation(convId);
+          console.log('[Complete Event] Scheduling loadConversation for:', convId);
+          // Add a small delay to ensure backend has finished writing to DB
+          setTimeout(() => {
+            console.log('[Complete Event] Executing delayed loadConversation for:', convId);
+            // DEBUG: Commenting out reload to see if content stays visible
+            // loadConversation(convId);
+            console.log('[Complete Event] RELOAD DISABLED FOR DEBUGGING');
+          }, 1000);
         } else {
           console.warn('[Complete Event] No conversationId available, skipping reload');
         }

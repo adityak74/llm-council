@@ -319,12 +319,19 @@
   gap: 16px;
 }
 
-.welcome-avatar {
-  width: 64px;
-  height: 64px;
-  font-size: 24px;
-  background-color: var(--primary-color);
-  color: var(--text-inverse);
+.welcome-avatar-container {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.welcome-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .welcome-header h2 {

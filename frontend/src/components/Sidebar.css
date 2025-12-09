@@ -28,6 +28,19 @@
   color: var(--text-primary);
 }
 
+.sidebar-logo-container {
+  padding: 0 16px 16px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 60px;
+  object-fit: contain;
+}
+
 .header-top {
   display: flex;
   align-items: center;
@@ -100,18 +113,9 @@
   color: var(--bg-primary);
 }
 
-.theme-toggle-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-}
-
-.theme-label {
-  font-size: 14px;
+.settings-btn:hover {
+  background: var(--text-secondary);
+  color: var(--bg-primary);
 }
 
 

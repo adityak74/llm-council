@@ -110,9 +110,9 @@ export default function ChatInterface({
       <div className="chat-interface empty-state-container">
         <div className="empty-state-content">
           <div className="welcome-header">
-            <Avatar className="welcome-avatar">
-              <AvatarFallback>LC</AvatarFallback>
-            </Avatar>
+            <div className="welcome-avatar-container">
+              <img src="/logo.png" alt="LLM Council" className="welcome-logo" />
+            </div>
             <h2>Welcome to LLM Council</h2>
           </div>
 

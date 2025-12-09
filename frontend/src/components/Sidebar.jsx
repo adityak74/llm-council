@@ -34,6 +34,9 @@ export default function Sidebar({
             </button>
             <h1>LLM Council</h1>
           </div>
+          <div className="sidebar-logo-container">
+            <img src="/logo.png" alt="LLM Council Logo" className="sidebar-logo" />
+          </div>
           <div className="sidebar-actions">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -62,13 +65,14 @@ export default function Sidebar({
               <TooltipContent>Configure Settings</TooltipContent>
             </Tooltip>
 
-            <div className="theme-toggle-container">
-              <span className="theme-label">🌙</span>
-              <Switch
-                checked={theme === 'dark'}
-                onCheckedChange={toggleTheme}
-              />
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="settings-btn" onClick={onOpenSettings}>
+                  Settings
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Configure Settings</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

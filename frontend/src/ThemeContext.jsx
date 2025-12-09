@@ -12,10 +12,8 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     // Check localStorage for saved theme, default to 'light'
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('theme');
-        return savedTheme || 'light';
-    });
+    // Always default to 'dark' for now since we removed the toggle
+    const [theme, setTheme] = useState('dark');
 
     useEffect(() => {
         // Update data-theme attribute on document root

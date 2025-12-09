@@ -246,6 +246,7 @@ export default function ChatInterface({
                           </button>
                         </div>
 
+
                         {/* Stage 1 */}
                         {msg.loading?.stage1 && (
                           <div className="stage-loading">
@@ -297,16 +298,7 @@ export default function ChatInterface({
               </>
             )}
 
-            {isLoading && (
-              <div className="loading-indicator">
-                <div className="spinner"></div>
-                <span>
-                  {conversation?.messages?.length === 0
-                    ? "Initializing Council Session..."
-                    : "Consulting the council..."}
-                </span>
-              </div>
-            )}
+            {/* Removed global loading indicator - stages show their own loading states */}
 
             {/* Re-run button (Standard Council only) */}
             {!isLoading && conversation.messages.length > 0 && conversation.conversation_type !== 'agentic' && onReRun && (

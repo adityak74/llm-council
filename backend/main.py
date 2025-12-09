@@ -1,4 +1,4 @@
-"""FastAPI backend for LLM Council."""
+"""FastAPI backend for QuorumAI."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from . import storage, personas
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
-app = FastAPI(title="LLM Council API")
+app = FastAPI(title="QuorumAI API")
 
 # Enable CORS for local development
 app.add_middleware(
@@ -66,7 +66,7 @@ class Conversation(BaseModel):
 @app.get("/")
 async def root():
     """Health check endpoint."""
-    return {"status": "ok", "service": "LLM Council API"}
+    return {"status": "ok", "service": "QuorumAI API"}
 
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
@@ -297,7 +297,15 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
     # If this is the first message, generate a title
     if is_first_message:
-        title = await generate_conversation_title(request.content)
+        # We need to resolve chairman first to use it for titling
+        council_config = conversation.get("council_config")
+        chairman_id = None
+        if council_config:
+            chairman_id = council_config["chairman"]["model_id"]
+        else:
+             chairman_id = CHAIRMAN_MODEL
+
+        title = await generate_conversation_title(request.content, model_id=chairman_id)
         storage.update_conversation_title(conversation_id, title)
 
     # Get council config from conversation
@@ -357,10 +365,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Start title generation in parallel (don't await yet)
             title_task = None
-            if is_first_message:
-                title_task = asyncio.create_task(generate_conversation_title(request.content))
-
-            # Get council config from conversation
+            # We need council config to know the chairman model
             council_config = conversation.get("council_config")
             
             # Fallback for old conversations
@@ -370,6 +375,9 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             else:
                 council_members = council_config["members"]
                 chairman = council_config["chairman"]
+
+            if is_first_message:
+                title_task = asyncio.create_task(generate_conversation_title(request.content, model_id=chairman['model_id']))
 
             # Run the council process
             if conversation.get("conversation_type") == "agentic":

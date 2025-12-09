@@ -1,4 +1,4 @@
-"""3-stage LLM Council orchestration."""
+"""3-stage QuorumAI orchestration."""
 
 from typing import List, Dict, Any, Tuple
 from .llm_client import query_models_parallel, query_model
@@ -37,19 +37,26 @@ async def stage1_collect_responses(
         for m in council_members
     ]
     
-    responses = await asyncio.gather(*tasks)
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Format results
     stage1_results = []
     for member, response in zip(council_members, responses):
-        if response is not None:  # Only include successful responses
+        if isinstance(response, Exception):
+             # Handle failure
+            stage1_results.append({
+                "model": member['model_id'],
+                "persona_name": member.get('name', member['model_id']),
+                "response": f"Error: {str(response)}"
+            })
+        elif response is not None:  # Only include successful responses
             stage1_results.append({
                 "model": member['model_id'],
                 "persona_name": member.get('name', member['model_id']),
                 "response": response.get('content', '')
             })
         else:
-            # Handle failure
+            # Handle failure (None returns)
             stage1_results.append({
                 "model": member['model_id'],
                 "persona_name": member.get('name', member['model_id']),
@@ -130,12 +137,19 @@ Now provide your evaluation and ranking:"""
         for m in council_members
     ]
     
-    responses = await asyncio.gather(*tasks)
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Format results
     stage2_results = []
     for member, response in zip(council_members, responses):
-        if response is not None:
+        if isinstance(response, Exception):
+            stage2_results.append({
+                "model": member['model_id'],
+                "persona_name": member.get('name', member['model_id']),
+                "ranking": f"Error: {str(response)}",
+                "parsed_ranking": []
+            })
+        elif response is not None:
             full_text = response.get('content', '')
             parsed = parse_ranking_from_text(full_text)
             stage2_results.append({
@@ -185,7 +199,7 @@ async def stage3_synthesize_final(
         for result in stage2_results
     ])
 
-    chairman_prompt = f"""You are the Chairman of an LLM Council. Multiple AI models have provided responses to a user's question, and then ranked each other's responses.
+    chairman_prompt = f"""You are the Chairman of QuorumAI. Multiple AI models have provided responses to a user's question, and then ranked each other's responses.
 
 Original Question: {user_query}
 
@@ -307,12 +321,13 @@ def calculate_aggregate_rankings(
     return aggregate
 
 
-async def generate_conversation_title(user_query: str) -> str:
+async def generate_conversation_title(user_query: str, model_id: str = None) -> str:
     """
     Generate a short title for a conversation based on the first user message.
 
     Args:
         user_query: The first user message
+        model_id: The model ID to use for generation (usually Chairman)
 
     Returns:
         A short title (3-5 words)
@@ -326,8 +341,11 @@ Title:"""
 
     messages = [{"role": "user", "content": title_prompt}]
 
-    # Use a small local model for title generation
-    response = await query_model("ollama/amsaravi/medgemma-4b-it:q8", messages, timeout=600.0)
+    # Use provided model or fallback to a default small model
+    target_model = model_id if model_id else "ollama/amsaravi/medgemma-4b-it:q8"
+    
+    # query_model expects messages list
+    response = await query_model(target_model, messages, timeout=600.0)
 
     if response is None:
         # Fallback to a generic title
@@ -400,7 +418,7 @@ async def generate_followup_question(
     chairman_member: Dict[str, Any]
 ) -> str:
     """Generate a follow-up question based on the previous answer."""
-    prompt = f"""You are the Chairman of an LLM Council.
+    prompt = f"""You are the Chairman of QuorumAI.
     
 Previous Question: {previous_query}
 Previous Answer: {previous_answer}

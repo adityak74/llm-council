@@ -108,12 +108,15 @@ function App() {
       }));
 
       // Send message with streaming
-      await api.sendMessageStream(currentConversationId, content, (eventType, event) => {
-        // ... reuse the same event handling logic ...
-        // To avoid code duplication, we should probably refactor the event handler into a separate function
-        // But for now, I'll duplicate the switch case or better yet, extract it.
+      // Create a wrapper that captures the conversation ID
+      const handleStreamEventWithId = (eventType, event) => {
+        // Add conversationId to the event for the complete handler
+        if (eventType === 'complete' || eventType === 'title_complete') {
+          event.conversationId = currentConversationId;
+        }
         handleStreamEvent(eventType, event);
-      });
+      };
+      await api.sendMessageStream(currentConversationId, content, handleStreamEventWithId);
     } catch (error) {
       console.error('Failed to re-run conversation:', error);
       setIsLoading(false);
@@ -122,14 +125,25 @@ function App() {
 
   // Extracted stream event handler to avoid duplication
   const handleStreamEvent = (eventType, event) => {
+    console.log('[SSE Event]', eventType, event); // Debug logging
     switch (eventType) {
       case 'stage1_start':
+        console.log('[stage1_start] Setting loading.stage1 = true');
         setCurrentConversation((prev) => {
+          console.log('[stage1_start] Current conversation:', prev);
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
+          console.log('[stage1_start] Last message:', lastMsg);
           // Ensure we are updating an assistant message
           if (lastMsg.role === 'assistant') {
-            lastMsg.loading.stage1 = true;
+            // Create new objects to trigger React re-render
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              loading: { ...lastMsg.loading, stage1: true }
+            };
+            console.log('[stage1_start] Set loading.stage1 = true');
+          } else {
+            console.warn('[stage1_start] Last message is not assistant:', lastMsg.role);
           }
           return { ...prev, messages };
         });
@@ -140,8 +154,12 @@ function App() {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
-            lastMsg.stage1 = event.data;
-            lastMsg.loading.stage1 = false;
+            // Create new objects to trigger React re-render
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              stage1: event.data,
+              loading: { ...lastMsg.loading, stage1: false }
+            };
           }
           return { ...prev, messages };
         });
@@ -152,7 +170,10 @@ function App() {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
-            lastMsg.loading.stage2 = true;
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              loading: { ...lastMsg.loading, stage2: true }
+            };
           }
           return { ...prev, messages };
         });
@@ -163,9 +184,12 @@ function App() {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
-            lastMsg.stage2 = event.data;
-            lastMsg.metadata = event.metadata;
-            lastMsg.loading.stage2 = false;
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              stage2: event.data,
+              metadata: event.metadata,
+              loading: { ...lastMsg.loading, stage2: false }
+            };
           }
           return { ...prev, messages };
         });
@@ -176,7 +200,10 @@ function App() {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
-            lastMsg.loading.stage3 = true;
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              loading: { ...lastMsg.loading, stage3: true }
+            };
           }
           return { ...prev, messages };
         });
@@ -187,18 +214,23 @@ function App() {
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
-            lastMsg.stage3 = event.data;
-            lastMsg.loading.stage3 = false;
+            messages[messages.length - 1] = {
+              ...lastMsg,
+              stage3: event.data,
+              loading: { ...lastMsg.loading, stage3: false }
+            };
           }
           return { ...prev, messages };
         });
         break;
 
       case 'title_complete':
+        console.log('[title_complete] Reloading conversations...');
         loadConversations();
         // Optimistically update current conversation title
         setCurrentConversation((prev) => {
           if (!prev) return prev;
+          console.log('[title_complete] Updating title to:', event.data.title);
           return {
             ...prev,
             title: event.data.title
@@ -207,7 +239,17 @@ function App() {
         break;
 
       case 'complete':
+        console.log('[Complete Event] Reloading conversations and current conversation...', event.conversationId || currentConversationId);
         loadConversations();
+        // Reload current conversation to show newly saved messages
+        // Use conversationId from event if available, otherwise fall back to currentConversationId
+        const convId = event.conversationId || currentConversationId;
+        if (convId) {
+          console.log('[Complete Event] Calling loadConversation for:', convId);
+          loadConversation(convId);
+        } else {
+          console.warn('[Complete Event] No conversationId available, skipping reload');
+        }
         setIsLoading(false);
         break;
 
@@ -350,7 +392,15 @@ function App() {
       }));
 
       // Send message with streaming
-      await api.sendMessageStream(targetId, content, handleStreamEvent);
+      // Create a wrapper that captures the conversation ID
+      const handleStreamEventWithId = (eventType, event) => {
+        // Add conversationId to the event for the complete handler
+        if (eventType === 'complete' || eventType === 'title_complete') {
+          event.conversationId = targetId;
+        }
+        handleStreamEvent(eventType, event);
+      };
+      await api.sendMessageStream(targetId, content, handleStreamEventWithId);
     } catch (error) {
       console.error('Failed to send message:', error);
       // Remove optimistic messages on error

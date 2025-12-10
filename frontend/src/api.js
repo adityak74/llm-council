@@ -1,5 +1,5 @@
 /**
- * API client for the QuorumAI backend.
+ * API client for the Quorum backend.
  */
 
 const API_BASE = 'http://localhost:8001';

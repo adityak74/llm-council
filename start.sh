@@ -2,7 +2,7 @@
 
 # QuorumAI - Start script
 
-echo "Starting QuorumAI..."
+echo "Starting Quorum..."
 echo ""
 
 # Start backend

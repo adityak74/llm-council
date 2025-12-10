@@ -1,4 +1,4 @@
-# QuorumAI
+# Quorum
 
 ![llmcouncil](header.jpg)
 

@@ -72,10 +72,10 @@ export default function Sidebar({
                 <line x1="9" y1="3" x2="9" y2="21"></line>
               </svg>
             </button>
-            <h1>QuorumAI</h1>
+            <h1>Quorum</h1>
           </div>
           <div className="sidebar-logo-container">
-            <img src="/logo.png" alt="QuorumAI Logo" className="sidebar-logo" />
+            <img src="/logo.png" alt="Quorum Logo" className="sidebar-logo" />
           </div>
           <div className="sidebar-actions">
             <Tooltip>

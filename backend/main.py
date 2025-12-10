@@ -1,4 +1,4 @@
-"""FastAPI backend for QuorumAI."""
+"""FastAPI backend for Quorum."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from . import storage, personas
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
-app = FastAPI(title="QuorumAI API")
+app = FastAPI(title="Quorum API")
 
 # Enable CORS for local development
 app.add_middleware(
@@ -66,7 +66,7 @@ class Conversation(BaseModel):
 @app.get("/")
 async def root():
     """Health check endpoint."""
-    return {"status": "ok", "service": "QuorumAI API"}
+    return {"status": "ok", "service": "Quorum API"}
 
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])

@@ -1,4 +1,4 @@
-"""Persona management for QuorumAI."""
+"""Persona management for Quorum."""
 
 import json
 import os

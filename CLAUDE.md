@@ -1,10 +1,10 @@
-# CLAUDE.md - Technical Notes for QuorumAI
+# CLAUDE.md - Technical Notes for Quorum
 
 This file contains technical details, architectural decisions, and important implementation notes for future development sessions.
 
 ## Project Overview
 
-QuorumAI is a 3-stage deliberation system where multiple LLMs collaboratively answer user questions. The key innovation is anonymized peer review in Stage 2, preventing models from playing favorites.
+Quorum is a 3-stage deliberation system where multiple LLMs collaboratively answer user questions. The key innovation is anonymized peer review in Stage 2, preventing models from playing favorites.
 
 ## Architecture
 

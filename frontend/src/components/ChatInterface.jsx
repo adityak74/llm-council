@@ -111,9 +111,10 @@ export default function ChatInterface({
         <div className="empty-state-content">
           <div className="welcome-header">
             <div className="welcome-avatar-container">
-              <img src="/logo.png" alt="QuorumAI" className="welcome-logo" />
+              <img src="/logo.png" alt="Quorum" className="welcome-logo" />
             </div>
-            <h2>Welcome to QuorumAI</h2>
+            <h2>Welcome to Quorum</h2>
+            <p>Ask a question to consult the Council of LLMs.</p>
           </div>
 
           <form className="quick-start-form" onSubmit={handleSubmit}>

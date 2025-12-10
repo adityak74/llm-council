@@ -1,4 +1,4 @@
-"""Configuration for the QuorumAI."""
+"""Configuration for the Quorum."""
 
 import os
 from dotenv import load_dotenv

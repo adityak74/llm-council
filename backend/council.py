@@ -1,4 +1,4 @@
-"""3-stage QuorumAI orchestration."""
+"""3-stage Quorum orchestration."""
 
 from typing import List, Dict, Any, Tuple
 from .llm_client import query_models_parallel, query_model
@@ -199,7 +199,7 @@ async def stage3_synthesize_final(
         for result in stage2_results
     ])
 
-    chairman_prompt = f"""You are the Chairman of QuorumAI. Multiple AI models have provided responses to a user's question, and then ranked each other's responses.
+    chairman_prompt = f"""You are the Chairman of Quorum. Multiple AI models have provided responses to a user's question, and then ranked each other's responses.
 
 Original Question: {user_query}
 
@@ -418,7 +418,7 @@ async def generate_followup_question(
     chairman_member: Dict[str, Any]
 ) -> str:
     """Generate a follow-up question based on the previous answer."""
-    prompt = f"""You are the Chairman of QuorumAI.
+    prompt = f"""You are the Chairman of Quorum.
     
 Previous Question: {previous_query}
 Previous Answer: {previous_answer}

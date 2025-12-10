@@ -2,7 +2,7 @@
 
 # QuorumAI - Restart script
 
-echo "Restarting QuorumAI..."
+echo "Restarting Quorum..."
 echo ""
 
 # Function to kill process on port
